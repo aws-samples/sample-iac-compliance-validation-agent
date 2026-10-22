@@ -1,0 +1,71 @@
+controls:
+  - id: "PCI-DSS-1.3.1"
+    title: "Network Security Controls - Restrict Inbound Traffic"
+    description: "Cardholder-data resources are not reachable from the internet: S3 public access is blocked, RDS instances are not publicly accessible, and Lambda functions run in a VPC."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-NET-S3-001"
+        description: "S3 buckets must block all public access"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          PublicAccessBlockConfiguration:
+            BlockPublicAcls: true
+            BlockPublicPolicy: true
+            IgnorePublicAcls: true
+            RestrictPublicBuckets: true
+      - rule_id: "PCI-NET-RDS-001"
+        description: "RDS instances must not be publicly accessible"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          PubliclyAccessible: false
+      - rule_id: "PCI-NET-LAMBDA-001"
+        description: "Lambda functions in CDE should be deployed in a VPC"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          VpcConfig: null
+    evidence_requirements:
+      - "No direct public internet access to CDE resources"
+      - "Security groups restrict inbound to necessary ports only"
+      - "Network segmentation between CDE and non-CDE"
+    remediation_guidance: "Block all public access to data stores. Deploy compute resources in private subnets within a VPC. Use security groups and NACLs to restrict inbound traffic to only necessary ports and sources."
+
+  - id: "PCI-DSS-1.3.2"
+    title: "Network Security Controls - Restrict Outbound Traffic"
+    description: "Lambda functions that process cardholder data run in a VPC, so outbound traffic can be controlled."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-NET-LAMBDA-002"
+        description: "Lambda functions processing cardholder data must be in VPC for egress control"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          VpcConfig: null
+    evidence_requirements:
+      - "Outbound traffic controlled via security groups and NACLs"
+      - "No unrestricted internet access from CDE"
+    remediation_guidance: "Deploy Lambda functions in a VPC with security groups that restrict outbound traffic. Use VPC endpoints for AWS service access instead of NAT gateway where possible."
+
+  - id: "PCI-DSS-2.2.7"
+    title: "Secure Configuration - Encryption for Non-Console Admin Access"
+    description: "OpenSearch domains enforce HTTPS, so administrative and data access is encrypted."
+    category: "Requirement 2 - Secure Configurations"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-CFG-OS-001"
+        description: "OpenSearch must enforce HTTPS for all access"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.EnforceHTTPS: true
+    evidence_requirements:
+      - "All administrative interfaces accessible only via encrypted channels"
+      - "No plaintext administrative protocols"
+    remediation_guidance: "Enforce HTTPS on all service endpoints. Disable any HTTP access. Use AWS Systems Manager Session Manager instead of SSH where applicable."

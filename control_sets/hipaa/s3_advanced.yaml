@@ -1,0 +1,51 @@
+controls:
+  - id: "HIPAA-164.312(b)-S3"
+    title: "Audit Controls - S3 Access Logging"
+    description: "S3 buckets containing ePHI must have access logging enabled to track all data access."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-S3-ACCESSLOG"
+        description: "S3 buckets must have access logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          LoggingConfiguration: null
+    evidence_requirements:
+      - "Access logging captures all object-level operations"
+    remediation_guidance: "Add LoggingConfiguration with DestinationBucketName pointing to a secure logging bucket."
+
+  - id: "HIPAA-164.312(c)(1)-S3"
+    title: "Integrity - S3 Object Lock"
+    description: "S3 buckets storing critical ePHI or audit data should use Object Lock for tamper protection."
+    category: "Technical Safeguards - Integrity"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-S3-LIFECYCLE"
+        description: "S3 buckets should have lifecycle rules for data retention management"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          LifecycleConfiguration: null
+    evidence_requirements:
+      - "Data retention policies enforced via lifecycle rules"
+    remediation_guidance: "Configure LifecycleConfiguration with Rules for transition and expiration based on data retention requirements."
+
+  - id: "HIPAA-164.312(e)(2)(ii)-S3"
+    title: "Transmission Security - S3 KMS Encryption"
+    description: "S3 buckets should use KMS (not just AES-256) for enhanced key management and audit trail."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-S3-KMS"
+        description: "S3 should use aws:kms encryption algorithm for CMK audit trail"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          BucketEncryption.ServerSideEncryptionConfiguration: null
+    evidence_requirements:
+      - "KMS encryption provides key usage audit trail via CloudTrail"
+    remediation_guidance: "Set SSEAlgorithm to aws:kms and specify KMSMasterKeyID for CMK control."

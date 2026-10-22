@@ -1,0 +1,88 @@
+controls:
+  - id: "PCI-DSS-3.5.1"
+    title: "Protect Stored Account Data - Encryption"
+    description: "Data stores that may hold cardholder data (S3, RDS, DynamoDB, OpenSearch, SQS, SNS) have encryption at rest enabled."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-ENC-S3-001"
+        description: "S3 buckets must have server-side encryption with KMS (AES-256 minimum)"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          BucketEncryption:
+            ServerSideEncryptionConfiguration: null
+      - rule_id: "PCI-ENC-RDS-001"
+        description: "RDS instances must have storage encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "PCI-ENC-DDB-001"
+        description: "DynamoDB tables must have encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::DynamoDB::Table"]
+        required_properties:
+          SSESpecification:
+            SSEEnabled: true
+      - rule_id: "PCI-ENC-OS-001"
+        description: "OpenSearch domains must have encryption at rest"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          EncryptionAtRestOptions.Enabled: true
+      - rule_id: "PCI-ENC-SQS-001"
+        description: "SQS queues must have encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::SQS::Queue"]
+        required_properties:
+          SqsManagedSseEnabled: true
+      - rule_id: "PCI-ENC-SNS-001"
+        description: "SNS topics must have KMS encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::SNS::Topic"]
+        required_properties:
+          KmsMasterKeyId: null
+    evidence_requirements:
+      - "AES-256 or stronger encryption on all data stores containing cardholder data"
+      - "KMS key management with appropriate rotation"
+    remediation_guidance: "Enable encryption at rest using AWS KMS on all data stores. Use CMK with automatic key rotation enabled. For S3, configure SSE-KMS. For RDS, set StorageEncrypted: true with KmsKeyId."
+
+  - id: "PCI-DSS-4.2.1"
+    title: "Protect Data in Transit - Strong Cryptography"
+    description: "OpenSearch domains and load balancer listeners enforce TLS 1.2 or later for data in transit."
+    category: "Requirement 4 - Protect Cardholder Data in Transit"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-TRANS-OS-001"
+        description: "OpenSearch must enforce HTTPS with TLS 1.2+"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.EnforceHTTPS: true
+      - rule_id: "PCI-TRANS-OS-002"
+        description: "OpenSearch must use TLS 1.2 minimum security policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.TLSSecurityPolicy:
+            "$in": ["Policy-Min-TLS-1-2-2019-07", "Policy-Min-TLS-1-2-PFS-2023-10"]
+      - rule_id: "PCI-TRANS-OS-003"
+        description: "OpenSearch must have node-to-node encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          NodeToNodeEncryptionOptions.Enabled: true
+      - rule_id: "PCI-TRANS-ELB-001"
+        description: "Load balancers must use TLS 1.2+ security policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          SslPolicy:
+            "$in": ["ELBSecurityPolicy-TLS13-1-2-2021-06", "ELBSecurityPolicy-FS-1-2-Res-2020-10", "ELBSecurityPolicy-TLS-1-2-2017-01"]
+    evidence_requirements:
+      - "TLS 1.2 or higher on all transmission paths"
+      - "No SSL/early TLS in use"
+    remediation_guidance: "Enforce HTTPS with TLS 1.2 minimum on all endpoints. Disable SSL and TLS 1.0/1.1. For OpenSearch, set EnforceHTTPS: true and TLSSecurityPolicy to Policy-Min-TLS-1-2-2019-07."

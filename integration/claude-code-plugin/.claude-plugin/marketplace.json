@@ -1,0 +1,14 @@
+{
+  "name": "cva-local",
+  "description": "Local marketplace for the Compliance Validation Agent Claude Code plugin.",
+  "owner": {
+    "name": "Compliance Validation Agent contributors"
+  },
+  "plugins": [
+    {
+      "name": "compliance-validation-agent",
+      "source": ".",
+      "description": "Compliance gate for agentic coding — validates IaC (CloudFormation/CDK/Terraform) against HIPAA, PCI-DSS, FedRAMP, or custom frameworks and returns verdicts + remediation tasks for self-correction."
+    }
+  ]
+}

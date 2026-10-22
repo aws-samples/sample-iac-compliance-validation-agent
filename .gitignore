@@ -1,0 +1,21 @@
+.venv/
+.venv-mcp/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+*.log
+.env
+src/compliance_validation_agent.egg-info/
+.lambda_build/
+infra/.venv/
+infra/cdk.out/
+.DS_Store
+
+# Generated reports
+cva-*-report.html
+cva-*-report.md
+cva-report-*

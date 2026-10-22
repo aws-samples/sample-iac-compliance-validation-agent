@@ -1,0 +1,69 @@
+controls:
+  - id: "PCI-DSS-6.3.2"
+    title: "Develop Secure Software - No Deprecated Runtimes"
+    description: "System components must not use end-of-life software that no longer receives security patches."
+    category: "Requirement 6 - Develop and Maintain Secure Systems"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-COMP-RUNTIME"
+        description: "Lambda functions must use supported runtimes"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          Runtime:
+            "$in": ["python3.13", "python3.12", "python3.11", "nodejs22.x", "nodejs20.x", "nodejs18.x", "java21", "java17", "dotnet8", "ruby3.3", "ruby3.2", "provided.al2023", "provided.al2"]
+    evidence_requirements:
+      - "No deprecated runtimes in CDE"
+    remediation_guidance: "Update Lambda runtime to a currently supported version."
+
+  - id: "PCI-DSS-2.2.1"
+    title: "Secure Configurations - EC2 IMDSv2"
+    description: "System components must be configured to prevent credential theft via SSRF attacks."
+    category: "Requirement 2 - Secure Configurations"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-CFG-IMDS"
+        description: "EC2 instances must require IMDSv2"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Instance"]
+        required_properties:
+          MetadataOptions.HttpTokens:
+            "$equals": "required"
+    evidence_requirements:
+      - "IMDSv2 required on all instances"
+    remediation_guidance: "Set MetadataOptions.HttpTokens to 'required' and HttpEndpoint to 'enabled'."
+
+  - id: "PCI-DSS-2.2.4"
+    title: "Secure Configurations - ECS Container Security"
+    description: "Containers must not run with elevated privileges and must have proper logging."
+    category: "Requirement 2 - Secure Configurations"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-CFG-ECS-NOPRIVILEGED"
+        description: "ECS containers must not run in privileged mode"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        anti_patterns:
+          - property: "ContainerDefinitions[0].Privileged"
+            value: true
+      - rule_id: "PCI-CFG-ECS-LOGS"
+        description: "ECS containers must ship logs to CloudWatch"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].LogConfiguration.LogDriver:
+            "$equals": "awslogs"
+      - rule_id: "PCI-CFG-ECS-READONLY"
+        description: "ECS containers should use read-only root filesystem"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].ReadonlyRootFilesystem: true
+    evidence_requirements:
+      - "No privileged containers"
+      - "Container logs shipped to CloudWatch"
+      - "Read-only root filesystem"
+    remediation_guidance: "Set Privileged: false, configure LogConfiguration with awslogs driver, set ReadonlyRootFilesystem: true."

@@ -1,0 +1,39 @@
+controls:
+  - id: "PCI-DSS-7.2.1"
+    title: "Restrict Access - Least Privilege"
+    description: "IAM roles can be assumed only by specific principals, not by any AWS account, so access stays tied to defined job functions."
+    category: "Requirement 7 - Restrict Access to System Components"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-AC-IAM-001"
+        description: "IAM roles must not use wildcard resource permissions for data access"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "AssumeRolePolicyDocument.Statement[0].Principal.AWS"
+            value: "*"
+    evidence_requirements:
+      - "Access limited to least privilege necessary"
+      - "No wildcard principals in IAM policies"
+      - "Role-based access control implemented"
+    remediation_guidance: "Implement least-privilege IAM policies. Use specific resource ARNs instead of wildcards. Assign permissions based on job function using IAM roles."
+
+  - id: "PCI-DSS-8.3.1"
+    title: "Strong Authentication - Unique IDs"
+    description: "OpenSearch domains require authenticated, per-user access through fine-grained access control."
+    category: "Requirement 8 - Identify Users and Authenticate Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-AUTH-OS-001"
+        description: "OpenSearch must have fine-grained access control enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          AdvancedSecurityOptions.Enabled: true
+    evidence_requirements:
+      - "Authentication required for all system access"
+      - "Unique identification for each user"
+      - "Fine-grained access control where available"
+    remediation_guidance: "Enable fine-grained access control on OpenSearch. Use IAM authentication for all service access. Ensure each user/service has unique credentials."

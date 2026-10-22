@@ -1,0 +1,44 @@
+controls:
+  - id: "HIPAA-164.312(b)-CT"
+    title: "Audit Controls - CloudTrail"
+    description: "Implement mechanisms that record and examine activity in information systems that contain or use ePHI. CloudTrail provides the foundational API-level audit log."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-CT-MULTIREGION"
+        description: "CloudTrail must be multi-region to capture all activity"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          IsMultiRegionTrail: true
+      - rule_id: "HIPAA-CT-VALIDATION"
+        description: "CloudTrail must enable log file validation for integrity"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          EnableLogFileValidation: true
+      - rule_id: "HIPAA-CT-ENCRYPTION"
+        description: "CloudTrail logs must be encrypted with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          KMSKeyId: null
+      - rule_id: "HIPAA-CT-CLOUDWATCH"
+        description: "CloudTrail must integrate with CloudWatch Logs for real-time alerting"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          CloudWatchLogsLogGroupArn: null
+      - rule_id: "HIPAA-CT-GLOBAL"
+        description: "CloudTrail must include global service events (IAM, STS)"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          IncludeGlobalServiceEvents: true
+    evidence_requirements:
+      - "Multi-region trail active"
+      - "Log file validation enabled"
+      - "Logs encrypted with KMS CMK"
+      - "CloudWatch Logs integration for real-time alerting"
+    remediation_guidance: "Create a multi-region CloudTrail trail with log file validation, KMS encryption, and CloudWatch Logs integration. Include global service events."

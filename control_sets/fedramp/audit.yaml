@@ -1,0 +1,80 @@
+controls:
+  - id: "AU-2"
+    title: "Event Logging"
+    description: "Identify the types of events that the system is capable of logging in support of the audit function."
+    category: "Audit and Accountability (AU)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU2-LAMBDA-001"
+        description: "Lambda functions must have tracing enabled for event logging"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          TracingConfig.Mode:
+            "$equals": "Active"
+      - rule_id: "FR-AU2-OS-001"
+        description: "OpenSearch must have log publishing enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          LogPublishingOptions: null
+      - rule_id: "FR-AU2-API-001"
+        description: "API Gateway must have access logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::ApiGateway::Stage"]
+        required_properties:
+          AccessLogSetting: null
+    evidence_requirements:
+      - "Audit events identified and logging configured"
+      - "Events include: successful/failed logins, privilege changes, data access, system events"
+    remediation_guidance: "Enable X-Ray tracing on Lambda. Configure log publishing for OpenSearch. Enable access logging on API Gateway. Ensure CloudTrail is active."
+
+  - id: "AU-6"
+    title: "Audit Record Review, Analysis, and Reporting"
+    description: "Review and analyze system audit records for indications of inappropriate or unusual activity."
+    category: "Audit and Accountability (AU)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU6-OS-001"
+        description: "OpenSearch domains should have log publishing for analysis capability"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          LogPublishingOptions: null
+    evidence_requirements:
+      - "Regular review of audit records (at least weekly)"
+      - "Automated alerting for suspicious activities"
+      - "Reporting mechanisms established"
+    remediation_guidance: "Configure log publishing to CloudWatch. Set up CloudWatch alarms for anomalous patterns. Use Amazon GuardDuty for automated threat detection."
+
+  - id: "AU-9"
+    title: "Protection of Audit Information"
+    description: "Protect audit information and audit logging tools from unauthorized access, modification, and deletion."
+    category: "Audit and Accountability (AU)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU9-S3-001"
+        description: "S3 buckets (log storage) must have versioning for protection against deletion"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          VersioningConfiguration.Status:
+            "$equals": "Enabled"
+      - rule_id: "FR-AU9-S3-002"
+        description: "S3 buckets must block public access to protect audit data"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          PublicAccessBlockConfiguration:
+            BlockPublicAcls: true
+            BlockPublicPolicy: true
+            IgnorePublicAcls: true
+            RestrictPublicBuckets: true
+    evidence_requirements:
+      - "Audit logs protected from modification"
+      - "Access to audit tools restricted to authorized personnel"
+      - "Backup of audit records"
+    remediation_guidance: "Enable versioning on log buckets. Block public access. Use S3 Object Lock for immutable storage. Restrict IAM permissions to audit log resources."

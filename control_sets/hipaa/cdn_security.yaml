@@ -1,0 +1,40 @@
+controls:
+  - id: "HIPAA-164.312(e)(1)-CDN"
+    title: "Transmission Security - CloudFront"
+    description: "CloudFront distributions must enforce HTTPS with modern TLS and have WAF protection."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-CDN-HTTPS"
+        description: "CloudFront must redirect HTTP to HTTPS or use HTTPS-only"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy:
+            "$in": ["redirect-to-https", "https-only"]
+      - rule_id: "HIPAA-CDN-TLS"
+        description: "CloudFront must use TLS 1.2 minimum"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.ViewerCertificate.MinimumProtocolVersion:
+            "$in": ["TLSv1.2_2021", "TLSv1.2_2019", "TLSv1.2_2018"]
+      - rule_id: "HIPAA-CDN-WAF"
+        description: "CloudFront should have WAF WebACL associated"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.WebACLId: null
+      - rule_id: "HIPAA-CDN-LOGGING"
+        description: "CloudFront must have access logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.Logging.Enabled: true
+    evidence_requirements:
+      - "HTTPS enforced for all viewers"
+      - "TLS 1.2 minimum protocol version"
+      - "WAF protection active"
+      - "Access logging enabled"
+    remediation_guidance: "Set ViewerProtocolPolicy to 'redirect-to-https'. Set MinimumProtocolVersion to TLSv1.2_2021. Associate a WAF WebACL. Enable logging with an S3 bucket."

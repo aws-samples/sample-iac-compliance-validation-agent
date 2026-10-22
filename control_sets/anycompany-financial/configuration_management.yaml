@@ -1,0 +1,116 @@
+controls:
+- id: ANYCO-SEC-002
+  title: Secrets must have automatic rotation
+  description: Secrets MUST have automatic rotation configured with maximum 90-day
+    interval.
+  category: Configuration Management
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-SEC-002-R1
+    description: Check ReplicaRegions on AWS::SecretsManager::Secret
+    check_type: resource_property
+    resource_types:
+    - AWS::SecretsManager::Secret
+    required_properties:
+      ReplicaRegions: null
+  evidence_requirements:
+  - Verify secrets have rotation configuration with 90-day maximum interval
+  remediation_guidance: Verify secrets have rotation configuration with 90-day maximum
+    interval
+- id: ANYCO-COM-001
+  title: Lambda functions must use supported runtimes
+  description: Lambda functions MUST use a currently supported runtime. Deprecated
+    runtimes (python3.8, nodejs16.x, java11, etc.) are not permitted in production.
+  category: Configuration Management
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-COM-001-R1
+    description: Check Runtime on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    anti_patterns:
+    - property: Runtime
+      value: Not deprecated runtimes like python3.8, nodejs16.x, java11
+  evidence_requirements:
+  - Verify Lambda functions use currently supported runtime versions
+  remediation_guidance: Verify Lambda functions use currently supported runtime versions
+- id: ANYCO-COM-002
+  title: Lambda functions must have dead letter queues
+  description: Lambda functions MUST have a dead-letter queue (DLQ) configured to
+    capture failed invocations for forensic analysis.
+  category: Configuration Management
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-COM-002-R1
+    description: Check DeadLetterConfig.TargetArn on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    required_properties:
+      DeadLetterConfig.TargetArn: null
+  evidence_requirements:
+  - Verify Lambda functions have dead letter queue configuration
+  remediation_guidance: Verify Lambda functions have dead letter queue configuration
+- id: ANYCO-COM-003
+  title: Lambda functions must have reserved concurrency
+  description: Lambda functions MUST have reserved concurrency configured to prevent
+    resource exhaustion attacks.
+  category: Configuration Management
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-COM-003-R1
+    description: Check ReservedConcurrencyLimit on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    required_properties:
+      ReservedConcurrencyLimit: null
+  evidence_requirements:
+  - Verify Lambda functions have reserved concurrency limits configured
+  remediation_guidance: Verify Lambda functions have reserved concurrency limits configured
+- id: ANYCO-COM-004
+  title: ECS tasks must have proper security configuration
+  description: 'ECS task definitions MUST: Configure awslogs log driver, NOT run containers
+    in privileged mode, Use read-only root filesystem where feasible, NOT use host
+    network mode, Set memory limits on all containers.'
+  category: Configuration Management
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-COM-004-R1
+    description: Check ContainerDefinitions[*].LogConfiguration.LogDriver on AWS::ECS::TaskDefinition
+    check_type: resource_property
+    resource_types:
+    - AWS::ECS::TaskDefinition
+    required_properties:
+      ContainerDefinitions[*].LogConfiguration.LogDriver:
+        $equals: awslogs
+  - rule_id: ANYCO-COM-004-R2
+    description: Check ContainerDefinitions[*].Privileged on AWS::ECS::TaskDefinition
+    check_type: resource_property
+    resource_types:
+    - AWS::ECS::TaskDefinition
+    anti_patterns:
+    - property: ContainerDefinitions[*].Privileged
+      value: 'true'
+  - rule_id: ANYCO-COM-004-R3
+    description: Check NetworkMode on AWS::ECS::TaskDefinition
+    check_type: resource_property
+    resource_types:
+    - AWS::ECS::TaskDefinition
+    anti_patterns:
+    - property: NetworkMode
+      value: host
+  evidence_requirements:
+  - Verify ECS task definitions have proper security configurations
+  remediation_guidance: Verify ECS task definitions have proper security configurations

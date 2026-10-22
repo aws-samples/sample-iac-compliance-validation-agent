@@ -1,0 +1,80 @@
+controls:
+  - id: "PCI-DSS-10.2.1.1"
+    title: "Log and Monitor - CloudTrail Foundation"
+    description: "CloudTrail provides the API-level audit log required by PCI-DSS Requirement 10."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-CT-MULTIREGION"
+        description: "CloudTrail must be multi-region"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          IsMultiRegionTrail: true
+      - rule_id: "PCI-CT-VALIDATION"
+        description: "Log file validation must be enabled for tamper detection"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          EnableLogFileValidation: true
+      - rule_id: "PCI-CT-KMS"
+        description: "CloudTrail logs must be encrypted with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          KMSKeyId: null
+      - rule_id: "PCI-CT-CLOUDWATCH"
+        description: "CloudTrail must send to CloudWatch for real-time monitoring"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          CloudWatchLogsLogGroupArn: null
+    evidence_requirements:
+      - "Multi-region trail active"
+      - "Log integrity validation enabled"
+      - "Logs encrypted"
+      - "Real-time monitoring via CloudWatch"
+    remediation_guidance: "Enable IsMultiRegionTrail, EnableLogFileValidation, KMSKeyId, and CloudWatchLogsLogGroupArn."
+
+  - id: "PCI-DSS-3.6.4"
+    title: "Protect Stored Data - Key Rotation"
+    description: "KMS keys have automatic rotation enabled, and Secrets Manager secrets have rotation configured."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-KEY-ROTATION"
+        description: "KMS keys must have automatic rotation enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::KMS::Key"]
+        required_properties:
+          EnableKeyRotation: true
+      - rule_id: "PCI-SECRET-ROTATION"
+        description: "Secrets must have rotation configured within 90 days"
+        check_type: "resource_property"
+        resource_types: ["AWS::SecretsManager::Secret"]
+        required_properties:
+          RotationRules: null
+    evidence_requirements:
+      - "KMS key rotation enabled"
+      - "Secret rotation within 90 days"
+    remediation_guidance: "Set EnableKeyRotation: true on KMS keys. Configure RotationRules on secrets."
+
+  - id: "PCI-DSS-1.3.4"
+    title: "Network Security - Security Groups"
+    description: "Security groups must not allow unrestricted inbound access from the internet."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-NET-SG-SSH"
+        description: "No unrestricted SSH from internet"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::SecurityGroup"]
+        anti_patterns:
+          - property: "SecurityGroupIngress[0].CidrIp"
+            value: "0.0.0.0/0"
+    evidence_requirements:
+      - "No inbound 0.0.0.0/0 rules on management ports"
+    remediation_guidance: "Restrict SecurityGroupIngress CidrIp to specific trusted ranges. Never allow 0.0.0.0/0 on SSH, RDP, or database ports."

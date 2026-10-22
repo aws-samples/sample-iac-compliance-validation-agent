@@ -1,0 +1,65 @@
+controls:
+- id: ANYCO-DP-001
+  title: S3 buckets must block public access
+  description: S3 buckets MUST block all public access (BlockPublicAcls, BlockPublicPolicy,
+    IgnorePublicAcls, RestrictPublicBuckets all set to true).
+  category: Data Protection
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-DP-001-R1
+    description: Check PublicAccessBlockConfiguration.BlockPublicAcls on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      PublicAccessBlockConfiguration.BlockPublicAcls:
+        $equals: 'true'
+  - rule_id: ANYCO-DP-001-R2
+    description: Check PublicAccessBlockConfiguration.BlockPublicPolicy on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      PublicAccessBlockConfiguration.BlockPublicPolicy:
+        $equals: 'true'
+  - rule_id: ANYCO-DP-001-R3
+    description: Check PublicAccessBlockConfiguration.IgnorePublicAcls on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      PublicAccessBlockConfiguration.IgnorePublicAcls:
+        $equals: 'true'
+  - rule_id: ANYCO-DP-001-R4
+    description: Check PublicAccessBlockConfiguration.RestrictPublicBuckets on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      PublicAccessBlockConfiguration.RestrictPublicBuckets:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify S3 buckets have all public access block settings enabled
+  remediation_guidance: Verify S3 buckets have all public access block settings enabled
+- id: ANYCO-DP-002
+  title: S3 buckets with restricted data must have versioning
+  description: S3 buckets storing RESTRICTED data MUST have versioning enabled.
+  category: Data Protection
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-DP-002-R1
+    description: Check VersioningConfiguration.Status on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      VersioningConfiguration.Status:
+        $equals: Enabled
+  evidence_requirements:
+  - Verify S3 buckets storing restricted data have versioning enabled
+  remediation_guidance: Verify S3 buckets storing restricted data have versioning
+    enabled

@@ -1,0 +1,99 @@
+controls:
+  - id: "HIPAA-164.312(a)(2)(iv)"
+    title: "Encryption and Decryption (Access Control)"
+    description: "Implement a mechanism to encrypt and decrypt electronic protected health information."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-ENC-S3-001"
+        description: "S3 buckets must have server-side encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          BucketEncryption:
+            ServerSideEncryptionConfiguration: null
+      - rule_id: "HIPAA-ENC-RDS-001"
+        description: "RDS instances must have storage encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "HIPAA-ENC-DDB-001"
+        description: "DynamoDB tables must have SSE enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::DynamoDB::Table"]
+        required_properties:
+          SSESpecification:
+            SSEEnabled: true
+      - rule_id: "HIPAA-ENC-OS-001"
+        description: "OpenSearch domains must have encryption at rest enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          EncryptionAtRestOptions.Enabled: true
+      - rule_id: "HIPAA-ENC-SQS-001"
+        description: "SQS queues must have encryption enabled (KMS or SQS-managed)"
+        check_type: "resource_property"
+        resource_types: ["AWS::SQS::Queue"]
+        required_properties:
+          SqsManagedSseEnabled: true
+    evidence_requirements:
+      - "Encryption configuration present in resource definition"
+      - "KMS key or SSE algorithm specified"
+    remediation_guidance: "Enable server-side encryption on all data stores. Use AWS KMS CMK for enhanced control. For S3, add BucketEncryption with SSEAlgorithm. For RDS, set StorageEncrypted: true. For DynamoDB, add SSESpecification with SSEEnabled: true."
+
+  - id: "HIPAA-164.312(e)(1)"
+    title: "Transmission Security"
+    description: "Implement technical security measures to guard against unauthorized access to ePHI being transmitted over an electronic communications network."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-TRANS-OS-001"
+        description: "OpenSearch domains must enforce HTTPS"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.EnforceHTTPS: true
+      - rule_id: "HIPAA-TRANS-OS-002"
+        description: "OpenSearch domains must use TLS 1.2 minimum"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.TLSSecurityPolicy:
+            "$in": ["Policy-Min-TLS-1-2-2019-07", "Policy-Min-TLS-1-2-PFS-2023-10"]
+      - rule_id: "HIPAA-TRANS-OS-003"
+        description: "OpenSearch domains must have node-to-node encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          NodeToNodeEncryptionOptions.Enabled: true
+      - rule_id: "HIPAA-TRANS-ELB-001"
+        description: "Load balancer listeners must use TLS 1.2+ policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          SslPolicy:
+            "$in": ["ELBSecurityPolicy-TLS13-1-2-2021-06", "ELBSecurityPolicy-FS-1-2-Res-2020-10", "ELBSecurityPolicy-TLS-1-2-2017-01"]
+    evidence_requirements:
+      - "TLS 1.2 or higher enforced on all endpoints"
+      - "HTTPS required for all data-in-transit paths"
+    remediation_guidance: "Enforce HTTPS with TLS 1.2 minimum on all network-facing resources. For OpenSearch, set DomainEndpointOptions.EnforceHTTPS: true and TLSSecurityPolicy: Policy-Min-TLS-1-2-2019-07. Enable node-to-node encryption."
+
+  - id: "HIPAA-164.312(e)(2)(ii)"
+    title: "Encryption (Transmission Security)"
+    description: "Implement a mechanism to encrypt electronic protected health information whenever deemed appropriate."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-TRANS-SNS-001"
+        description: "SNS topics should use KMS encryption for PHI data"
+        check_type: "resource_property"
+        resource_types: ["AWS::SNS::Topic"]
+        required_properties:
+          KmsMasterKeyId: null
+    evidence_requirements:
+      - "KMS encryption configured for message-based services"
+    remediation_guidance: "Enable KMS encryption for SNS topics that may carry PHI. Set KmsMasterKeyId to an appropriate CMK ARN or alias."

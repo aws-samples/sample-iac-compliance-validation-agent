@@ -1,0 +1,69 @@
+controls:
+  - id: "PCI-DSS-10.2.1"
+    title: "Log and Monitor - Audit Trail"
+    description: "Lambda tracing, API Gateway access logging, and OpenSearch log publishing are enabled so activity in the cardholder data environment is recorded."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-LOG-LAMBDA-001"
+        description: "Lambda functions must have X-Ray tracing for audit trail"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          TracingConfig.Mode:
+            "$equals": "Active"
+      - rule_id: "PCI-LOG-OS-001"
+        description: "OpenSearch domains must have log publishing enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          LogPublishingOptions: null
+      - rule_id: "PCI-LOG-API-001"
+        description: "API Gateway must have access logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::ApiGateway::Stage"]
+        required_properties:
+          AccessLogSetting: null
+    evidence_requirements:
+      - "Audit logs capture all access to cardholder data"
+      - "Logs include user ID, event type, date/time, success/failure, origination, identity of affected data"
+      - "Log retention of at least 12 months (3 months immediately available)"
+    remediation_guidance: "Enable X-Ray tracing on Lambda. Configure log publishing on OpenSearch. Enable access logging on API Gateway. Ensure CloudTrail is active for API-level audit trail."
+
+  - id: "PCI-DSS-10.2.2"
+    title: "Log and Monitor - Actions by Privileged Users"
+    description: "OpenSearch domains publish audit logs so administrative actions are recorded."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-LOG-OS-002"
+        description: "OpenSearch must log audit events for admin actions"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          LogPublishingOptions: null
+    evidence_requirements:
+      - "All administrative actions logged"
+      - "Logs protected from unauthorized modification"
+    remediation_guidance: "Enable audit logging on OpenSearch domains. Configure CloudTrail for management events. Store logs in a separate, restricted S3 bucket with object lock."
+
+  - id: "PCI-DSS-10.3.3"
+    title: "Log and Monitor - Backup and Protection"
+    description: "S3 buckets that store logs have versioning enabled, so log files cannot be silently overwritten."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-LOG-S3-001"
+        description: "S3 buckets storing logs should have versioning for tamper protection"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          VersioningConfiguration.Status:
+            "$equals": "Enabled"
+    evidence_requirements:
+      - "Logs backed up to centralized, tamper-resistant storage"
+      - "Log integrity verification mechanisms in place"
+    remediation_guidance: "Enable versioning on S3 buckets storing logs. Consider S3 Object Lock for immutable log storage. Use CloudTrail log file validation."

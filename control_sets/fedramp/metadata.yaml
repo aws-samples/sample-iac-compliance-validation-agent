@@ -1,0 +1,4 @@
+framework: FedRAMP
+version: "Moderate-Rev5"
+description: FedRAMP Moderate Baseline (NIST SP 800-53 Rev 5) - Technical controls validatable against AWS IaC
+scope: Access control, audit, system protection, and communications protection families

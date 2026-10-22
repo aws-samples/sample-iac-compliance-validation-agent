@@ -1,0 +1,50 @@
+[project]
+name = "compliance-validation-agent"
+version = "0.1.0"
+description = "Framework-agnostic compliance validation for IaC artifacts"
+requires-python = ">=3.9"
+license = { text = "MIT-0" }
+readme = "README.md"
+dependencies = [
+    "click>=8.1",
+    "pyyaml>=6.0",
+    "rich>=13.0",
+    "boto3>=1.34",
+    "cfn-lint>=1.0",
+    "defusedxml>=0.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "python-hcl2>=4.3,<5",
+]
+terraform = [
+    "python-hcl2>=4.3,<5",
+]
+mcp = [
+    "mcp>=1.2",
+]
+pdf = [
+    "pypdf>=4.0",
+]
+semantic = [
+    "opensearch-py>=2.4",
+]
+
+[project.scripts]
+cva = "cva.cli:main"
+cva-mcp = "cva.mcp_server:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

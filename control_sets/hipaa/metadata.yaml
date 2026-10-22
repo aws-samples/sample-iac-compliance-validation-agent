@@ -1,0 +1,4 @@
+framework: HIPAA
+version: "2024-03"
+description: HIPAA Security Rule - Technical Safeguards (45 CFR 164.312)
+scope: Technical controls validatable against AWS IaC artifacts

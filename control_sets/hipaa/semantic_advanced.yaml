@@ -1,0 +1,71 @@
+controls:
+  - id: "HIPAA-164.312(e)(1)-DATAFLOW"
+    title: "Data Flow Isolation"
+    description: "Electronic protected health information must remain within its designated security boundary during processing. Data flows across Lambda, SQS, SNS, and databases must not leak PHI to unprotected systems or channels."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "CRITICAL"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "PHI data paths stay within encrypted, authenticated boundaries"
+      - "No unencrypted intermediate storage or message passing"
+      - "Cross-service communication uses private endpoints or VPC"
+      - "No PHI data written to unencrypted logs or public endpoints"
+    remediation_guidance: "Map all data flows containing PHI. Ensure every hop (Lambda→SQS→RDS) has encryption in transit and at rest. Use VPC endpoints for service-to-service communication. Verify no logging statements expose PHI in plaintext."
+
+  - id: "HIPAA-164.312(a)(1)-DEFENSE-DEPTH"
+    title: "Defense in Depth Architecture"
+    description: "Infrastructure must implement multiple independent security layers so that compromise of any single control does not expose ePHI. Defense in depth requires network, application, and data layer protections operating independently."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Network layer: VPC, subnets, security groups, NACLs"
+      - "Application layer: IAM roles, authentication, authorization"
+      - "Data layer: encryption at rest, encryption in transit, key management"
+      - "Monitoring layer: CloudTrail, logging, alerting"
+      - "At least 3 independent layers present"
+    remediation_guidance: "Ensure architecture has network isolation (VPC/subnets), application-level auth (IAM/FGAC), data-level encryption (KMS), and monitoring (CloudTrail/CloudWatch). No single layer failure should expose PHI."
+
+  - id: "HIPAA-164.312(a)(1)-KEY-SEPARATION"
+    title: "Key Management Separation"
+    description: "Cryptographic keys must be managed with appropriate separation. Different services and data classifications should not share encryption keys, as compromise of one key should not expose data across multiple systems."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Different KMS keys for different services (S3 vs RDS vs DynamoDB)"
+      - "No single key encrypting all data stores"
+      - "Key policies scope access to specific services"
+    remediation_guidance: "Create separate KMS CMKs for each data store or service. Use key aliases for identification. Ensure key policies restrict usage to the specific service that needs it."
+
+  - id: "HIPAA-164.308(a)(6)(ii)"
+    title: "Incident Response Capability"
+    description: "Implement policies and procedures to address security incidents. The infrastructure must support incident detection, alerting, investigation, and response through integrated logging, monitoring, and notification mechanisms."
+    category: "Administrative Safeguards - Security Incident Procedures"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "CloudTrail active for API-level detection"
+      - "CloudWatch alarms or EventBridge rules for anomaly alerting"
+      - "SNS topic or similar notification mechanism configured"
+      - "Log aggregation enables investigation (CloudWatch Logs, S3 log bucket)"
+      - "Sufficient log retention for forensic analysis"
+    remediation_guidance: "Deploy CloudTrail with CloudWatch integration. Create metric filters and alarms for security-relevant events. Configure SNS notifications to security team. Ensure log retention supports forensic timelines (minimum 90 days online, 1 year archived)."
+
+  - id: "HIPAA-164.312(a)(1)-DATA-CLASS"
+    title: "Data Classification Alignment"
+    description: "Encryption and access control strength must be commensurate with data sensitivity. Systems storing or processing ePHI require the highest tier of protection — KMS CMK encryption, VPC isolation, fine-grained access control."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Resources handling PHI have stronger encryption than general resources"
+      - "PHI databases use KMS CMK, not default encryption"
+      - "PHI data stores are in private subnets, not public-facing"
+      - "Access to PHI requires authentication and is logged"
+    remediation_guidance: "Identify which resources handle PHI and ensure they have the highest protection tier: KMS CMK encryption, VPC with private subnets, fine-grained access control, and comprehensive audit logging."

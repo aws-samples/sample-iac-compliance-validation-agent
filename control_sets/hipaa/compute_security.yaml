@@ -1,0 +1,48 @@
+controls:
+  - id: "HIPAA-164.312(a)(1)-COMPUTE"
+    title: "Access Control - Compute Security"
+    description: "Lambda functions and ECS tasks processing ePHI must have proper security configurations."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-COMP-LAMBDA-RUNTIME"
+        description: "Lambda functions must not use deprecated runtimes"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          Runtime:
+            "$in": ["python3.13", "python3.12", "python3.11", "nodejs22.x", "nodejs20.x", "nodejs18.x", "java21", "java17", "dotnet8", "ruby3.3", "ruby3.2", "provided.al2023", "provided.al2"]
+      - rule_id: "HIPAA-COMP-LAMBDA-DLQ"
+        description: "Lambda functions must have dead-letter queue configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          DeadLetterConfig.TargetArn: null
+      - rule_id: "HIPAA-COMP-ECS-LOGS"
+        description: "ECS tasks must have log driver configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].LogConfiguration.LogDriver:
+            "$equals": "awslogs"
+      - rule_id: "HIPAA-COMP-ECS-NOPRIVILEGED"
+        description: "ECS containers must not run in privileged mode"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        anti_patterns:
+          - property: "ContainerDefinitions[0].Privileged"
+            value: true
+      - rule_id: "HIPAA-COMP-ECS-NOIP"
+        description: "Fargate services must not assign public IP"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::Service"]
+        required_properties:
+          NetworkConfiguration.AwsvpcConfiguration.AssignPublicIp:
+            "$equals": "DISABLED"
+    evidence_requirements:
+      - "No deprecated runtimes in use"
+      - "Failed invocations captured via DLQ"
+      - "Container logs shipped to CloudWatch"
+      - "No privileged containers"
+    remediation_guidance: "Update Lambda runtimes to supported versions. Configure DeadLetterConfig with an SQS queue or SNS topic ARN. Set LogConfiguration with awslogs driver on all ECS container definitions. Never use Privileged: true."

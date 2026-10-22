@@ -1,0 +1,4 @@
+framework: PCI-DSS
+version: "4.0"
+description: PCI Data Security Standard v4.0 - Technical requirements for protecting cardholder data
+scope: Network security, encryption, access control, logging, and vulnerability management controls validatable against AWS IaC artifacts

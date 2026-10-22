@@ -1,0 +1,170 @@
+controls:
+- id: ANYCO-LOG-001
+  title: CloudTrail must be properly configured
+  description: 'CloudTrail MUST be enabled with: Multi-region trail, Log file validation
+    enabled, KMS encryption, CloudWatch Logs integration for real-time alerting, Include
+    global service events (IAM, STS).'
+  category: Logging & Monitoring
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-001-R1
+    description: Check IsMultiRegionTrail on AWS::CloudTrail::Trail
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudTrail::Trail
+    required_properties:
+      IsMultiRegionTrail:
+        $equals: 'true'
+  - rule_id: ANYCO-LOG-001-R2
+    description: Check EnableLogFileValidation on AWS::CloudTrail::Trail
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudTrail::Trail
+    required_properties:
+      EnableLogFileValidation:
+        $equals: 'true'
+  - rule_id: ANYCO-LOG-001-R3
+    description: Check KMSKeyId on AWS::CloudTrail::Trail
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudTrail::Trail
+    required_properties:
+      KMSKeyId: null
+  evidence_requirements:
+  - Verify CloudTrail has all required configurations enabled
+  remediation_guidance: Verify CloudTrail has all required configurations enabled
+- id: ANYCO-LOG-002
+  title: Lambda functions must have X-Ray tracing
+  description: All Lambda functions MUST have X-Ray tracing set to Active mode.
+  category: Logging & Monitoring
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-002-R1
+    description: Check TracingConfig.Mode on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    required_properties:
+      TracingConfig.Mode:
+        $equals: Active
+  evidence_requirements:
+  - Verify Lambda functions have X-Ray tracing mode set to Active
+  remediation_guidance: Verify Lambda functions have X-Ray tracing mode set to Active
+- id: ANYCO-LOG-003
+  title: RDS must export logs to CloudWatch
+  description: All RDS instances MUST export audit and error logs to CloudWatch Logs.
+    Enhanced monitoring MUST be enabled with interval <= 60 seconds.
+  category: Logging & Monitoring
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-003-R1
+    description: Check EnableCloudwatchLogsExports on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      EnableCloudwatchLogsExports: null
+  - rule_id: ANYCO-LOG-003-R2
+    description: Check MonitoringInterval on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      MonitoringInterval: null
+  evidence_requirements:
+  - Verify RDS instances have log exports and enhanced monitoring configured
+  remediation_guidance: Verify RDS instances have log exports and enhanced monitoring
+    configured
+- id: ANYCO-LOG-004
+  title: API Gateway must have logging and tracing
+  description: API Gateway stages MUST have access logging enabled and X-Ray tracing
+    active.
+  category: Logging & Monitoring
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-004-R1
+    description: Check AccessLogSetting.DestinationArn on AWS::ApiGateway::Stage
+    check_type: resource_property
+    resource_types:
+    - AWS::ApiGateway::Stage
+    required_properties:
+      AccessLogSetting.DestinationArn: null
+  - rule_id: ANYCO-LOG-004-R2
+    description: Check TracingEnabled on AWS::ApiGateway::Stage
+    check_type: resource_property
+    resource_types:
+    - AWS::ApiGateway::Stage
+    required_properties:
+      TracingEnabled:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify API Gateway stages have access logging and X-Ray tracing enabled
+  remediation_guidance: Verify API Gateway stages have access logging and X-Ray tracing
+    enabled
+- id: ANYCO-LOG-005
+  title: Load balancers must have access logging
+  description: Load balancers MUST have access logging enabled to a dedicated S3 bucket.
+  category: Logging & Monitoring
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-005-R1
+    description: Check LoadBalancerAttributes on AWS::ElasticLoadBalancingV2::LoadBalancer
+    check_type: resource_property
+    resource_types:
+    - AWS::ElasticLoadBalancingV2::LoadBalancer
+    required_properties:
+      LoadBalancerAttributes: null
+  evidence_requirements:
+  - Verify load balancers have access logs enabled to S3
+  remediation_guidance: Verify load balancers have access logs enabled to S3
+- id: ANYCO-LOG-006
+  title: S3 buckets must have server access logging
+  description: S3 buckets containing RESTRICTED data MUST have server access logging
+    enabled.
+  category: Logging & Monitoring
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-006-R1
+    description: Check LoggingConfiguration.DestinationBucketName on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      LoggingConfiguration.DestinationBucketName: null
+  evidence_requirements:
+  - Verify S3 buckets with restricted data have server access logging configured
+  remediation_guidance: Verify S3 buckets with restricted data have server access
+    logging configured
+- id: ANYCO-LOG-007
+  title: CloudWatch logs must have retention configured
+  description: "CloudWatch Log Groups MUST have retention configured \u2014 minimum\
+    \ 365 days for RESTRICTED data, 90 days for CONFIDENTIAL, 30 days for INTERNAL."
+  category: Logging & Monitoring
+  severity: MEDIUM
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-LOG-007-R1
+    description: Check RetentionInDays on AWS::Logs::LogGroup
+    check_type: resource_property
+    resource_types:
+    - AWS::Logs::LogGroup
+    required_properties:
+      RetentionInDays: null
+  evidence_requirements:
+  - Verify CloudWatch Log Groups have appropriate retention periods based on data
+    classification
+  remediation_guidance: Verify CloudWatch Log Groups have appropriate retention periods
+    based on data classification

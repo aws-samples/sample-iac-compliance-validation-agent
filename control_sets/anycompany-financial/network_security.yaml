@@ -1,0 +1,223 @@
+controls:
+- id: ANYCO-NET-001
+  title: Databases must not be publicly accessible
+  description: No database (RDS, Redshift, OpenSearch, ElastiCache) may be publicly
+    accessible. All databases MUST be deployed in private subnets only.
+  category: Network Security
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-001-R1
+    description: Check PubliclyAccessible on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      PubliclyAccessible:
+        $equals: 'false'
+  - rule_id: ANYCO-NET-001-R2
+    description: Check PubliclyAccessible on AWS::Redshift::Cluster
+    check_type: resource_property
+    resource_types:
+    - AWS::Redshift::Cluster
+    required_properties:
+      PubliclyAccessible:
+        $equals: 'false'
+  evidence_requirements:
+  - Verify databases are not publicly accessible and deployed in private subnets
+  remediation_guidance: Verify databases are not publicly accessible and deployed
+    in private subnets
+- id: ANYCO-NET-002
+  title: OpenSearch domains must be in VPC
+  description: OpenSearch domains MUST be deployed within a VPC. Public endpoints
+    are prohibited.
+  category: Network Security
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-002-R1
+    description: Check VPCOptions.SubnetIds on AWS::OpenSearch::Domain
+    check_type: resource_property
+    resource_types:
+    - AWS::OpenSearch::Domain
+    required_properties:
+      VPCOptions.SubnetIds: null
+  evidence_requirements:
+  - Verify OpenSearch domains have VPC configuration
+  remediation_guidance: Verify OpenSearch domains have VPC configuration
+- id: ANYCO-NET-003
+  title: Security groups restrict 0.0.0.0/0 access
+  description: 'Security groups MUST NOT allow inbound traffic from 0.0.0.0/0 on any
+    port. Exception: public-facing ALBs on ports 80 (redirect only) and 443.'
+  category: Network Security
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-003-R1
+    description: Check SecurityGroupIngress on AWS::EC2::SecurityGroup
+    check_type: resource_property
+    resource_types:
+    - AWS::EC2::SecurityGroup
+    anti_patterns:
+    - property: SecurityGroupIngress
+      value: No ingress rules with CidrIp 0.0.0.0/0 except for ALB resources on ports
+        80/443
+  evidence_requirements:
+  - Verify security groups do not allow unrestricted inbound access except for ALBs
+    on ports 80/443
+  remediation_guidance: Verify security groups do not allow unrestricted inbound access
+    except for ALBs on ports 80/443
+- id: ANYCO-NET-004
+  title: Lambda functions in VPC for restricted data
+  description: Lambda functions that process RESTRICTED data MUST be deployed inside
+    a VPC with appropriate security groups.
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-004-R1
+    description: Check VpcConfig.SubnetIds on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    required_properties:
+      VpcConfig.SubnetIds: null
+  evidence_requirements:
+  - Verify Lambda functions processing restricted data have VPC configuration
+  remediation_guidance: Verify Lambda functions processing restricted data have VPC
+    configuration
+- id: ANYCO-NET-005
+  title: EC2 instances must require IMDSv2
+  description: EC2 instances MUST require IMDSv2 (HttpTokens=required). IMDSv1 is
+    prohibited due to SSRF credential theft risk.
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-005-R1
+    description: Check MetadataOptions.HttpTokens on AWS::EC2::Instance
+    check_type: resource_property
+    resource_types:
+    - AWS::EC2::Instance
+    required_properties:
+      MetadataOptions.HttpTokens:
+        $equals: required
+  - rule_id: ANYCO-NET-005-R2
+    description: Check LaunchTemplateData.MetadataOptions.HttpTokens on AWS::EC2::LaunchTemplate
+    check_type: resource_property
+    resource_types:
+    - AWS::EC2::LaunchTemplate
+    required_properties:
+      LaunchTemplateData.MetadataOptions.HttpTokens:
+        $equals: required
+  evidence_requirements:
+  - Verify EC2 instances have HttpTokens set to required for IMDSv2
+  remediation_guidance: Verify EC2 instances have HttpTokens set to required for IMDSv2
+- id: ANYCO-NET-006
+  title: Public-facing endpoints must have WAF
+  description: All public-facing endpoints (CloudFront, ALB, API Gateway) MUST have
+    AWS WAF with OWASP Top 10 rule set attached.
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-NET-006-R1
+    description: Check DistributionConfig.WebACLId on AWS::CloudFront::Distribution
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudFront::Distribution
+    required_properties:
+      DistributionConfig.WebACLId: null
+  - rule_id: ANYCO-NET-006-R2
+    description: Check WebACLArn on AWS::ApiGateway::Stage
+    check_type: resource_property
+    resource_types:
+    - AWS::ApiGateway::Stage
+    required_properties:
+      WebACLArn: null
+  evidence_requirements:
+  - Verify public-facing resources have WAF WebACL attached
+  remediation_guidance: Verify public-facing resources have WAF WebACL attached
+- id: ANYCO-COM-005
+  title: Fargate services must not have public IPs
+  description: Fargate services MUST NOT assign public IP addresses.
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-COM-005-R1
+    description: Check NetworkConfiguration.AwsvpcConfiguration.AssignPublicIp on
+      AWS::ECS::Service
+    check_type: resource_property
+    resource_types:
+    - AWS::ECS::Service
+    required_properties:
+      NetworkConfiguration.AwsvpcConfiguration.AssignPublicIp:
+        $equals: DISABLED
+  evidence_requirements:
+  - Verify Fargate services do not assign public IP addresses
+  remediation_guidance: Verify Fargate services do not assign public IP addresses
+- id: ANYCO-CDN-001
+  title: CloudFront distributions must enforce HTTPS
+  description: 'CloudFront distributions MUST: Enforce HTTPS (redirect-to-https or
+    https-only viewer protocol), Use TLS 1.2 minimum (TLSv1.2_2021 recommended), Have
+    access logging enabled, Have WAF WebACL associated, Use Origin Access Control
+    (OAC) for S3 origins.'
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-CDN-001-R1
+    description: Check DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy
+      on AWS::CloudFront::Distribution
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudFront::Distribution
+    required_properties:
+      DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy: null
+  - rule_id: ANYCO-CDN-001-R2
+    description: Check DistributionConfig.Logging.Bucket on AWS::CloudFront::Distribution
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudFront::Distribution
+    required_properties:
+      DistributionConfig.Logging.Bucket: null
+  - rule_id: ANYCO-CDN-001-R3
+    description: Check DistributionConfig.WebACLId on AWS::CloudFront::Distribution
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudFront::Distribution
+    required_properties:
+      DistributionConfig.WebACLId: null
+  evidence_requirements:
+  - Verify CloudFront distributions have proper security configuration
+  remediation_guidance: Verify CloudFront distributions have proper security configuration
+- id: ANYCO-CDN-002
+  title: CloudFront origins must use HTTPS only
+  description: CloudFront distributions MUST use HTTPS-only origin protocol policy.
+    HTTP origins are prohibited.
+  category: Network Security
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-CDN-002-R1
+    description: Check DistributionConfig.Origins[*].CustomOriginConfig.OriginProtocolPolicy
+      on AWS::CloudFront::Distribution
+    check_type: resource_property
+    resource_types:
+    - AWS::CloudFront::Distribution
+    required_properties:
+      DistributionConfig.Origins[*].CustomOriginConfig.OriginProtocolPolicy:
+        $equals: https-only
+  evidence_requirements:
+  - Verify CloudFront distributions use HTTPS for origin communication
+  remediation_guidance: Verify CloudFront distributions use HTTPS for origin communication

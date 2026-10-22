@@ -1,0 +1,173 @@
+controls:
+- id: ANYCO-ENC-001
+  title: Data stores must use KMS CMK encryption
+  description: All data stores (S3, RDS, DynamoDB, EBS, EFS, Redshift) MUST use AWS
+    KMS Customer Managed Keys (CMK) for encryption at rest. AWS-managed keys (aws/s3,
+    aws/rds, etc.) are NOT acceptable for RESTRICTED or CONFIDENTIAL data.
+  category: Encryption
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ENC-001-R1
+    description: Check BucketEncryption.ServerSideEncryptionConfiguration[0].ServerSideEncryptionByDefault.SSEAlgorithm
+      on AWS::S3::Bucket
+    check_type: resource_property
+    resource_types:
+    - AWS::S3::Bucket
+    required_properties:
+      BucketEncryption.ServerSideEncryptionConfiguration[0].ServerSideEncryptionByDefault.SSEAlgorithm:
+        $equals: aws:kms with KMSMasterKeyID specified
+  - rule_id: ANYCO-ENC-001-R2
+    description: Check KmsKeyId on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      KmsKeyId: null
+  evidence_requirements:
+  - Verify encryption configuration uses KMS Customer Managed Keys, not AWS managed
+    keys
+  remediation_guidance: Verify encryption configuration uses KMS Customer Managed
+    Keys, not AWS managed keys
+- id: ANYCO-ENC-002
+  title: KMS keys must have automatic rotation
+  description: KMS keys MUST have automatic annual rotation enabled.
+  category: Encryption
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ENC-002-R1
+    description: Check EnableKeyRotation on AWS::KMS::Key
+    check_type: resource_property
+    resource_types:
+    - AWS::KMS::Key
+    required_properties:
+      EnableKeyRotation:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify KMS keys have EnableKeyRotation set to true
+  remediation_guidance: Verify KMS keys have EnableKeyRotation set to true
+- id: ANYCO-ENC-003
+  title: OpenSearch domains require encryption at rest
+  description: OpenSearch domains MUST enable both encryption at rest AND node-to-node
+    encryption. HTTPS must be enforced with minimum TLS 1.2 policy.
+  category: Encryption
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ENC-003-R1
+    description: Check EncryptionAtRestOptions.Enabled on AWS::OpenSearch::Domain
+    check_type: resource_property
+    resource_types:
+    - AWS::OpenSearch::Domain
+    required_properties:
+      EncryptionAtRestOptions.Enabled:
+        $equals: 'true'
+  - rule_id: ANYCO-ENC-003-R2
+    description: Check NodeToNodeEncryptionOptions.Enabled on AWS::OpenSearch::Domain
+    check_type: resource_property
+    resource_types:
+    - AWS::OpenSearch::Domain
+    required_properties:
+      NodeToNodeEncryptionOptions.Enabled:
+        $equals: 'true'
+  - rule_id: ANYCO-ENC-003-R3
+    description: Check DomainEndpointOptions.EnforceHTTPS on AWS::OpenSearch::Domain
+    check_type: resource_property
+    resource_types:
+    - AWS::OpenSearch::Domain
+    required_properties:
+      DomainEndpointOptions.EnforceHTTPS:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify encryption at rest, node-to-node encryption, and HTTPS enforcement with
+    TLS 1.2
+  remediation_guidance: Verify encryption at rest, node-to-node encryption, and HTTPS
+    enforcement with TLS 1.2
+- id: ANYCO-ENC-004
+  title: SQS and SNS must use KMS CMK
+  description: SQS queues and SNS topics MUST use KMS CMK encryption (not SQS-managed
+    SSE).
+  category: Encryption
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ENC-004-R1
+    description: Check KmsMasterKeyId on AWS::SQS::Queue
+    check_type: resource_property
+    resource_types:
+    - AWS::SQS::Queue
+    required_properties:
+      KmsMasterKeyId: null
+  - rule_id: ANYCO-ENC-004-R2
+    description: Check KmsMasterKeyId on AWS::SNS::Topic
+    check_type: resource_property
+    resource_types:
+    - AWS::SNS::Topic
+    required_properties:
+      KmsMasterKeyId: null
+  evidence_requirements:
+  - Verify SQS and SNS resources use customer managed KMS keys
+  remediation_guidance: Verify SQS and SNS resources use customer managed KMS keys
+- id: ANYCO-ENC-005
+  title: CloudWatch logs must use KMS encryption
+  description: CloudWatch Log Groups containing RESTRICTED or CONFIDENTIAL data MUST
+    be encrypted with a KMS CMK.
+  category: Encryption
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ENC-005-R1
+    description: Check KmsKeyId on AWS::Logs::LogGroup
+    check_type: resource_property
+    resource_types:
+    - AWS::Logs::LogGroup
+    required_properties:
+      KmsKeyId: null
+  evidence_requirements:
+  - Verify CloudWatch Log Groups have KMS encryption configured
+  remediation_guidance: Verify CloudWatch Log Groups have KMS encryption configured
+- id: ANYCO-SEC-003
+  title: Secrets must use KMS CMK encryption
+  description: Secrets MUST use KMS CMK encryption (not the default aws/secretsmanager
+    key).
+  category: Encryption
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-SEC-003-R1
+    description: Check KmsKeyId on AWS::SecretsManager::Secret
+    check_type: resource_property
+    resource_types:
+    - AWS::SecretsManager::Secret
+    required_properties:
+      KmsKeyId: null
+  evidence_requirements:
+  - Verify secrets use customer managed KMS keys for encryption
+  remediation_guidance: Verify secrets use customer managed KMS keys for encryption
+- id: ANYCO-SEC-004
+  title: Lambda environment variables must be encrypted
+  description: Lambda function environment variables containing credentials MUST be
+    encrypted with a KMS CMK (KmsKeyArn configured).
+  category: Encryption
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-SEC-004-R1
+    description: Check Environment.KmsKeyArn on AWS::Lambda::Function
+    check_type: resource_property
+    resource_types:
+    - AWS::Lambda::Function
+    required_properties:
+      Environment.KmsKeyArn: null
+  evidence_requirements:
+  - Verify Lambda functions with environment variables have KMS encryption configured
+  remediation_guidance: Verify Lambda functions with environment variables have KMS
+    encryption configured

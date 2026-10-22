@@ -1,0 +1,71 @@
+controls:
+  - id: "PCI-DSS-12.10.1-DR"
+    title: "Business Continuity and Disaster Recovery"
+    description: "Incident response plan must include business recovery procedures. The architecture must support recovery of CDE systems within defined timeframes."
+    category: "Requirement 12 - Support Information Security with Policies"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Multi-AZ for databases processing cardholder data"
+      - "Backup retention adequate for recovery (14+ days)"
+      - "No single points of failure in the payment processing path"
+      - "Cross-region replication or backup for disaster scenarios"
+      - "Deployment includes circuit breakers or rollback capability"
+    remediation_guidance: "Deploy CDE databases in Multi-AZ with cross-region backups. Ensure payment processing path has no single points of failure. Implement deployment rollback mechanisms."
+
+  - id: "PCI-DSS-6.5.3"
+    title: "Secure SDLC - Code and Deployment Integrity"
+    description: "Verify that deployed code has not been tampered with. Lambda functions should use code signing, container images should come from verified registries, and deployment pipelines should enforce integrity checks."
+    category: "Requirement 6 - Develop and Maintain Secure Systems"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Lambda functions have CodeSigningConfigArn configured"
+      - "ECS task definitions reference images from private ECR (not public Docker Hub)"
+      - "Container images use immutable tags (digest-based references)"
+      - "No inline code in CloudFormation (code should be in versioned artifacts)"
+    remediation_guidance: "Enable code signing for Lambda deployments. Use private ECR repositories with image scanning. Reference container images by digest, not mutable tags. Store deployment artifacts in versioned S3 or CodeCommit."
+
+  - id: "PCI-DSS-6.5.6"
+    title: "Change Management - Rollback Capability"
+    description: "All changes to system components in the CDE must be reversible. Deployments should include rollback mechanisms, canary analysis, or circuit breakers."
+    category: "Requirement 6 - Develop and Maintain Secure Systems"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Lambda functions use versioning and aliases (not $LATEST in production)"
+      - "ECS services have deployment circuit breakers enabled"
+      - "Database changes have backup taken before migration"
+      - "CloudFormation stack has rollback configuration"
+    remediation_guidance: "Use Lambda aliases pointing to published versions. Enable ECS deployment circuit breakers. Take database snapshots before schema changes. Configure CloudFormation rollback triggers."
+
+  - id: "PCI-DSS-3.6.5"
+    title: "Encryption Key Access Patterns"
+    description: "Restrict access to cryptographic keys to the fewest number of custodians necessary. Review which roles can use KMS Decrypt and verify access is appropriate for the data they protect."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "KMS key policies restrict Decrypt to specific roles"
+      - "Not more than 3-4 roles have Decrypt access per key"
+      - "Application roles have Decrypt but not key management (Create/Delete/Disable)"
+      - "Key administrators cannot Decrypt (separation of duties)"
+    remediation_guidance: "Review KMS key policies. Restrict kms:Decrypt to only the roles that need to read the data. Separate key administration (kms:Create*, kms:Delete*, kms:Disable*) from key usage (kms:Decrypt, kms:Encrypt)."
+
+  - id: "PCI-DSS-10.2.1-COMPLETE"
+    title: "Audit Log Completeness"
+    description: "Audit logs must cover ALL access to cardholder data — not just some resources. Every path through which CHD can be read or modified must have an audit trail."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Every data store in CDE has access logging enabled"
+      - "Every API endpoint serving CHD has request logging"
+      - "No data access path exists without a corresponding log"
+      - "Log coverage matches the data flow diagram"
+    remediation_guidance: "Map all access paths to cardholder data. Verify each has logging: S3 access logs, RDS audit logs, API Gateway access logs, Lambda tracing. Close any gaps where data can be accessed without an audit trail."

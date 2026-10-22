@@ -1,0 +1,205 @@
+AnyCompany Financial Services — Cloud Security Policy
+Document ID: ANYCO-SEC-POL-2024-03
+Effective Date: January 15, 2024
+Classification: FICTITIOUS PUBLIC SAMPLE — NOT AN AMAZON OR CUSTOMER POLICY
+
+NOTE: AnyCompany Financial Services is a fictional company. This document was written
+for this sample as input to `cva ingest`. It is not derived from any Amazon, AWS, or
+customer policy, and it is not security guidance.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. PURPOSE AND SCOPE
+
+This policy defines mandatory security requirements for all AWS cloud infrastructure
+deployed by AnyCompany Financial Services or its technology partners. All systems processing,
+storing, or transmitting customer financial data (CFD) must comply with these requirements.
+
+Non-compliance will block production deployment approval.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2. DATA CLASSIFICATION
+
+- RESTRICTED: Customer PII, account numbers, SSNs, payment card data
+- CONFIDENTIAL: Internal financial reports, audit logs, system credentials
+- INTERNAL: Architecture documents, runbooks, non-sensitive configs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3. ENCRYPTION REQUIREMENTS
+
+3.1  All data stores (S3, RDS, DynamoDB, EBS, EFS, Redshift) MUST use AWS KMS
+     Customer Managed Keys (CMK) for encryption at rest. AWS-managed keys (aws/s3,
+     aws/rds, etc.) are NOT acceptable for RESTRICTED or CONFIDENTIAL data.
+
+3.2  KMS keys MUST have automatic annual rotation enabled.
+
+3.3  All data in transit MUST use TLS 1.2 or higher. TLS 1.0, TLS 1.1, and SSL
+     are explicitly prohibited.
+
+3.4  OpenSearch domains MUST enable both encryption at rest AND node-to-node
+     encryption. HTTPS must be enforced with minimum TLS 1.2 policy.
+
+3.5  SQS queues and SNS topics MUST use KMS CMK encryption (not SQS-managed SSE).
+
+3.6  CloudWatch Log Groups containing RESTRICTED or CONFIDENTIAL data MUST be
+     encrypted with a KMS CMK.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4. NETWORK SECURITY
+
+4.1  No database (RDS, Redshift, OpenSearch, ElastiCache) may be publicly accessible.
+     All databases MUST be deployed in private subnets only.
+
+4.2  OpenSearch domains MUST be deployed within a VPC. Public endpoints are prohibited.
+
+4.3  Security groups MUST NOT allow inbound traffic from 0.0.0.0/0 on any port.
+     Exception: public-facing ALBs on ports 80 (redirect only) and 443.
+
+4.4  Lambda functions that process RESTRICTED data MUST be deployed inside a VPC
+     with appropriate security groups.
+
+4.5  EC2 instances MUST require IMDSv2 (HttpTokens=required). IMDSv1 is prohibited
+     due to SSRF credential theft risk.
+
+4.6  EC2 instances MUST NOT have public IP addresses unless explicitly approved by
+     the Security Architecture Review Board (SARB).
+
+4.7  All public-facing endpoints (CloudFront, ALB, API Gateway) MUST have AWS WAF
+     with OWASP Top 10 rule set attached.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5. ACCESS CONTROL
+
+5.1  IAM policies MUST follow least privilege. Wildcard actions (e.g., "s3:*",
+     "ec2:*") are prohibited. Wildcard resources ("Resource": "*") are prohibited
+     unless scoped by conditions.
+
+5.2  The AdministratorAccess managed policy MUST NOT be attached to any role used
+     by applications or automation. It is permitted only for break-glass accounts.
+
+5.3  IAM roles MUST have permission boundaries attached.
+
+5.4  Cross-account role assumptions MUST include ExternalId conditions.
+
+5.5  RDS and Aurora clusters MUST enable IAM database authentication. Long-lived
+     database passwords are prohibited for application access.
+
+5.6  OpenSearch domains MUST enable Fine-Grained Access Control (FGAC).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6. LOGGING AND MONITORING
+
+6.1  CloudTrail MUST be enabled with:
+     - Multi-region trail
+     - Log file validation enabled
+     - KMS encryption
+     - CloudWatch Logs integration for real-time alerting
+     - Include global service events (IAM, STS)
+
+6.2  All Lambda functions MUST have X-Ray tracing set to Active mode.
+
+6.3  All RDS instances MUST export audit and error logs to CloudWatch Logs.
+     Enhanced monitoring MUST be enabled with interval <= 60 seconds.
+
+6.4  API Gateway stages MUST have access logging enabled and X-Ray tracing active.
+
+6.5  Load balancers MUST have access logging enabled to a dedicated S3 bucket.
+
+6.6  S3 buckets containing RESTRICTED data MUST have server access logging enabled.
+
+6.7  CloudWatch Log Groups MUST have retention configured — minimum 365 days for
+     RESTRICTED data, 90 days for CONFIDENTIAL, 30 days for INTERNAL.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+7. DATA PROTECTION AND INTEGRITY
+
+7.1  S3 buckets MUST block all public access (BlockPublicAcls, BlockPublicPolicy,
+     IgnorePublicAcls, RestrictPublicBuckets all set to true).
+
+7.2  S3 buckets storing RESTRICTED data MUST have versioning enabled.
+
+7.3  RDS instances MUST have:
+     - Deletion protection enabled
+     - Automated backups with retention >= 14 days
+     - Multi-AZ deployment for production workloads
+     - Copy tags to snapshots enabled
+
+7.4  DynamoDB tables MUST have:
+     - Point-in-time recovery enabled
+     - Deletion protection enabled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+8. SECRETS MANAGEMENT
+
+8.1  Application secrets MUST be stored in AWS Secrets Manager (not SSM Parameter
+     Store, not environment variables, not hardcoded).
+
+8.2  Secrets MUST have automatic rotation configured with maximum 90-day interval.
+
+8.3  Secrets MUST use KMS CMK encryption (not the default aws/secretsmanager key).
+
+8.4  Lambda function environment variables containing credentials MUST be encrypted
+     with a KMS CMK (KmsKeyArn configured).
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+9. COMPUTE SECURITY
+
+9.1  Lambda functions MUST use a currently supported runtime. Deprecated runtimes
+     (python3.8, nodejs16.x, java11, etc.) are not permitted in production.
+
+9.2  Lambda functions MUST have a dead-letter queue (DLQ) configured to capture
+     failed invocations for forensic analysis.
+
+9.3  Lambda functions MUST have reserved concurrency configured to prevent
+     resource exhaustion attacks.
+
+9.4  ECS task definitions MUST:
+     - Configure awslogs log driver
+     - NOT run containers in privileged mode
+     - Use read-only root filesystem where feasible
+     - NOT use host network mode
+     - Set memory limits on all containers
+
+9.5  Fargate services MUST NOT assign public IP addresses.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10. CDN AND EDGE SECURITY
+
+10.1 CloudFront distributions MUST:
+     - Enforce HTTPS (redirect-to-https or https-only viewer protocol)
+     - Use TLS 1.2 minimum (TLSv1.2_2021 recommended)
+     - Have access logging enabled
+     - Have WAF WebACL associated
+     - Use Origin Access Control (OAC) for S3 origins — direct S3 public access
+       is prohibited
+
+10.2 CloudFront distributions MUST use HTTPS-only origin protocol policy.
+     HTTP origins are prohibited.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+11. COMPLIANCE ATTESTATION
+
+All infrastructure changes MUST pass automated compliance validation before
+deployment to production. The compliance validation report MUST be retained
+for audit purposes with the engagement documentation.
+
+Exceptions to this policy require written approval from the CISO and must be
+documented with compensating controls and a remediation timeline not exceeding
+90 days.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Document Owner: AnyCompany CISO Office
+Next Review Date: January 15, 2025
+
+(End of fictitious sample policy.)

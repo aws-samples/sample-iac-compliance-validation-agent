@@ -1,0 +1,72 @@
+controls:
+  - id: "HIPAA-164.312(a)(1)"
+    title: "Access Control"
+    description: "Implement technical policies and procedures for electronic information systems that maintain ePHI to allow access only to authorized persons or software programs."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-AC-S3-001"
+        description: "S3 buckets must block public access"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          PublicAccessBlockConfiguration:
+            BlockPublicAcls: true
+            BlockPublicPolicy: true
+            IgnorePublicAcls: true
+            RestrictPublicBuckets: true
+      - rule_id: "HIPAA-AC-RDS-001"
+        description: "RDS instances must not be publicly accessible"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          PubliclyAccessible: false
+      - rule_id: "HIPAA-AC-LAMBDA-001"
+        description: "Lambda functions handling PHI should be in a VPC"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          VpcConfig: null
+    evidence_requirements:
+      - "No public access to data stores"
+      - "Network isolation for compute resources handling PHI"
+      - "IAM policies enforce least privilege"
+    remediation_guidance: "Block all public access to S3 buckets. Ensure RDS is not publicly accessible. Place Lambda functions in a VPC with appropriate security groups when they process PHI."
+
+  - id: "HIPAA-164.312(a)(2)(i)"
+    title: "Unique User Identification"
+    description: "Assign a unique name and/or number for identifying and tracking user identity."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac", "code"]
+    validation_rules:
+      - rule_id: "HIPAA-UID-IAM-001"
+        description: "IAM roles must not use wildcard principals"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "AssumeRolePolicyDocument.Statement[0].Principal.AWS"
+            value: "*"
+    evidence_requirements:
+      - "Each user/service has unique IAM identity"
+      - "No shared credentials or wildcard principals"
+    remediation_guidance: "Use specific IAM principals rather than wildcards. Each service and user should have a unique, identifiable role or user account."
+
+  - id: "HIPAA-164.312(d)"
+    title: "Person or Entity Authentication"
+    description: "Implement procedures to verify that a person or entity seeking access to ePHI is the one claimed."
+    category: "Technical Safeguards - Authentication"
+    severity: "HIGH"
+    artifact_types: ["iac", "code"]
+    validation_rules:
+      - rule_id: "HIPAA-AUTH-OS-001"
+        description: "OpenSearch domains should have fine-grained access control enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          AdvancedSecurityOptions.Enabled: true
+    evidence_requirements:
+      - "Authentication required for all access to ePHI systems"
+      - "Fine-grained access control enabled where available"
+    remediation_guidance: "Enable fine-grained access control on OpenSearch domains. Ensure all services require authentication before granting access to PHI data."

@@ -1,0 +1,82 @@
+controls:
+  - id: "CM-7"
+    title: "Least Functionality"
+    description: "Configure the system to provide only mission-essential capabilities. Prohibit or restrict use of functions, ports, protocols, and services not essential."
+    category: "Configuration Management (CM)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-CM7-ECS-READONLY"
+        description: "ECS containers should use read-only root filesystem"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].ReadonlyRootFilesystem: true
+      - rule_id: "FR-CM7-ECS-NOPRIVILEGED"
+        description: "ECS containers must not run privileged"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        anti_patterns:
+          - property: "ContainerDefinitions[0].Privileged"
+            value: true
+      - rule_id: "FR-CM7-ECS-NOHOST"
+        description: "ECS tasks must not use host network mode"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        anti_patterns:
+          - property: "NetworkMode"
+            value: "host"
+    evidence_requirements:
+      - "Minimal container privileges"
+      - "Read-only filesystems where possible"
+      - "No host network mode"
+    remediation_guidance: "Set ReadonlyRootFilesystem: true, Privileged: false, and avoid NetworkMode: host."
+
+  - id: "SC-5"
+    title: "Denial-of-Service Protection"
+    description: "Protect against or limit the effects of denial-of-service attacks."
+    category: "System and Communications Protection (SC)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC5-LAMBDA-CONCURRENCY"
+        description: "Lambda must have reserved concurrency to prevent resource exhaustion"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          ReservedConcurrentExecutions: null
+      - rule_id: "FR-SC5-ECS-MEMORY"
+        description: "ECS containers must have memory limits"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].Memory: null
+    evidence_requirements:
+      - "Resource limits configured to prevent exhaustion"
+      - "Concurrency limits on compute"
+    remediation_guidance: "Set ReservedConcurrentExecutions on Lambda. Set Memory limits on ECS container definitions."
+
+  - id: "AU-12"
+    title: "Audit Record Generation"
+    description: "Provide audit record generation capability for the events defined in AU-2."
+    category: "Audit and Accountability (AU)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU12-ECS-LOGS"
+        description: "ECS tasks must configure logging"
+        check_type: "resource_property"
+        resource_types: ["AWS::ECS::TaskDefinition"]
+        required_properties:
+          ContainerDefinitions[0].LogConfiguration.LogDriver:
+            "$equals": "awslogs"
+      - rule_id: "FR-AU12-LAMBDA-DLQ"
+        description: "Lambda must capture failed invocations"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          DeadLetterConfig.TargetArn: null
+    evidence_requirements:
+      - "All compute resources generate audit records"
+      - "Failed events captured for analysis"
+    remediation_guidance: "Configure LogConfiguration with awslogs driver on ECS. Set DeadLetterConfig on Lambda functions."

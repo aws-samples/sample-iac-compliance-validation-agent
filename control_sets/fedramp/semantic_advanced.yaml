@@ -1,0 +1,117 @@
+controls:
+  - id: "CP-2"
+    title: "Contingency Plan - Disaster Recovery Architecture"
+    description: "Develop and implement a contingency plan that addresses maintaining essential mission functions despite system disruption. Architecture must survive AZ and region failures."
+    category: "Contingency Planning (CP)"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Critical databases deployed Multi-AZ"
+      - "Cross-region replication or backup for region-level disaster"
+      - "Compute can recover in a different AZ (auto-scaling, Fargate)"
+      - "RTO and RPO achievable with current backup/replication configuration"
+      - "No architecture-level single points of failure"
+    remediation_guidance: "Deploy databases in Multi-AZ. Configure cross-region backup for critical data. Use auto-scaling or Fargate for compute resilience. Document RTO/RPO and verify they are achievable."
+
+  - id: "SA-11"
+    title: "Developer Security Testing - Code Integrity"
+    description: "Require the developer of the system to create and implement a security assessment plan. Deployed artifacts must have integrity verification (code signing, image scanning)."
+    category: "System and Services Acquisition (SA)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Lambda functions use code signing (CodeSigningConfigArn)"
+      - "Container images from private ECR with scanning enabled"
+      - "No references to public container registries for production workloads"
+      - "Deployment artifacts are versioned and traceable"
+    remediation_guidance: "Enable Lambda code signing. Use private ECR with scan-on-push. Reference images by digest. Ensure all deployment artifacts are stored in versioned, access-controlled repositories."
+
+  - id: "CM-3"
+    title: "Configuration Change Control - Rollback"
+    description: "Implement configuration change control for the system. Changes must be reversible and deployments must include rollback capability."
+    category: "Configuration Management (CM)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Lambda uses versioning and aliases (not $LATEST)"
+      - "ECS services have deployment circuit breakers"
+      - "Database backups taken before changes (snapshot before migration)"
+      - "CloudFormation rollback enabled"
+      - "Blue/green or canary deployment patterns where applicable"
+    remediation_guidance: "Use Lambda aliases pointing to published versions. Enable ECS DeploymentCircuitBreaker. Take RDS snapshots before schema changes. Configure CloudFormation automatic rollback on failure."
+
+  - id: "AU-11"
+    title: "Audit Record Retention"
+    description: "Retain audit records for a defined period consistent with records retention policy. Logs must not expire prematurely and must support long-term forensic investigation."
+    category: "Audit and Accountability (AU)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "CloudWatch Log Groups have retention configured (minimum 90 days online)"
+      - "CloudTrail logs stored in S3 with lifecycle rules for long-term archive"
+      - "S3 log buckets have versioning (prevent deletion of audit records)"
+      - "No logs set to expire in less than 90 days"
+      - "Archive strategy for logs beyond online retention (Glacier/Deep Archive)"
+    remediation_guidance: "Set log retention to minimum 90 days online. Archive to S3 Glacier for long-term retention (FedRAMP typically requires 1-3 years). Enable versioning on log storage buckets."
+
+  - id: "AU-6(1)"
+    title: "Audit Log Completeness and Integration"
+    description: "Integrate audit record review, analysis, and reporting processes using automated mechanisms. Verify that logging collectively covers all system access paths."
+    category: "Audit and Accountability (AU)"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "All data stores have access logging enabled"
+      - "All API endpoints have request logging"
+      - "All compute resources have execution tracing"
+      - "Logs from different sources can be correlated (consistent format, timestamps)"
+      - "No access path exists without a corresponding audit record"
+    remediation_guidance: "Map all system access paths. Enable logging on every component. Ensure CloudTrail, access logs, and application logs can be correlated via request IDs or timestamps. Close logging gaps."
+
+  - id: "CP-8"
+    title: "Telecommunications Services - Availability Risk"
+    description: "Establish alternate telecommunications services for the system. Assess single points of failure in network connectivity and service dependencies."
+    category: "Contingency Planning (CP)"
+    severity: "MEDIUM"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Multiple availability zones used for networking"
+      - "No reliance on a single NAT Gateway or Transit Gateway"
+      - "DNS failover configured if applicable"
+      - "VPN or Direct Connect has redundant connections if used"
+    remediation_guidance: "Deploy NAT Gateways in multiple AZs. Use Route 53 health checks with failover. If using VPN/Direct Connect, configure redundant tunnels. Avoid single-AZ networking designs."
+
+  - id: "RA-5"
+    title: "Vulnerability Monitoring and Scanning"
+    description: "Monitor and scan for vulnerabilities in the system and hosted applications. Verify that vulnerability detection mechanisms are in place."
+    category: "Risk Assessment (RA)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Amazon Inspector or equivalent scanning configured"
+      - "ECR image scanning enabled"
+      - "GuardDuty enabled for runtime threat detection"
+      - "Deprecated runtimes and unpatched components identified"
+      - "Findings have a remediation path (not just detected)"
+    remediation_guidance: "Enable Amazon Inspector for vulnerability scanning. Enable ECR scan-on-push. Activate GuardDuty for runtime detection. Establish process to remediate findings within defined SLAs."
+
+  - id: "SC-12(1)"
+    title: "Cryptographic Key Establishment - Access Pattern Review"
+    description: "Review cryptographic key access patterns to ensure only necessary principals can decrypt data. Excessive key access permissions expand the blast radius of credential compromise."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "KMS key policies limit Decrypt access to specific roles"
+      - "Number of principals with Decrypt access is justified"
+      - "Key administrators cannot Decrypt (separation of duties)"
+      - "No wildcard principals in key policies"
+    remediation_guidance: "Review KMS key policies. Restrict kms:Decrypt to the minimum roles needed. Separate key administration from key usage. Remove any wildcard (*) principals from key policies."

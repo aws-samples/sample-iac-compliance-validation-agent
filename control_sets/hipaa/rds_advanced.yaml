@@ -1,0 +1,49 @@
+controls:
+  - id: "HIPAA-164.312(d)-RDS"
+    title: "Authentication - RDS IAM Authentication"
+    description: "RDS instances should use IAM authentication to eliminate long-lived database passwords."
+    category: "Technical Safeguards - Authentication"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-RDS-IAM"
+        description: "RDS instances should enable IAM database authentication"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          EnableIAMDatabaseAuthentication: true
+      - rule_id: "HIPAA-RDS-KMSKEY"
+        description: "RDS must use KMS CMK for encryption (not just default key)"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "IAM authentication enabled"
+      - "KMS CMK specified for encryption"
+    remediation_guidance: "Set EnableIAMDatabaseAuthentication to true. Specify KmsKeyId with a CMK ARN for encryption at rest."
+
+  - id: "HIPAA-164.312(b)-RDS"
+    title: "Audit Controls - RDS Logging and Monitoring"
+    description: "RDS instances must export logs to CloudWatch and enable enhanced monitoring."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-RDS-LOGS"
+        description: "RDS must export logs to CloudWatch"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          EnableCloudwatchLogsExports: null
+      - rule_id: "HIPAA-RDS-MONITORING"
+        description: "RDS must have enhanced monitoring enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MonitoringInterval:
+            "$gte": 1
+    evidence_requirements:
+      - "CloudWatch log exports configured"
+      - "Enhanced monitoring active"
+    remediation_guidance: "Set EnableCloudwatchLogsExports to include audit, error, general, or slowquery logs. Set MonitoringInterval to 60 (seconds) and provide MonitoringRoleArn."

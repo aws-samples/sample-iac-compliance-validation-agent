@@ -1,0 +1,58 @@
+controls:
+  - id: "HIPAA-164.312(a)(1)-NET"
+    title: "Network Access Control - Security Groups"
+    description: "Implement technical policies to prevent unauthorized network access to systems containing ePHI."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-NET-SG-SSH"
+        description: "Security groups must not allow SSH (port 22) from 0.0.0.0/0"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::SecurityGroup"]
+        anti_patterns:
+          - property: "SecurityGroupIngress[0].CidrIp"
+            value: "0.0.0.0/0"
+      - rule_id: "HIPAA-NET-SG-RDP"
+        description: "Security groups must not allow RDP (port 3389) from 0.0.0.0/0"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::SecurityGroup"]
+        anti_patterns:
+          - property: "SecurityGroupIngress[0].CidrIp"
+            value: "0.0.0.0/0"
+      - rule_id: "HIPAA-NET-EC2-IMDS"
+        description: "EC2 instances must require IMDSv2 to prevent SSRF credential theft"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Instance"]
+        required_properties:
+          MetadataOptions.HttpTokens:
+            "$equals": "required"
+      - rule_id: "HIPAA-NET-EC2-NOIP"
+        description: "EC2 instances should not have public IP addresses"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Instance"]
+        required_properties:
+          NetworkInterfaces[0].AssociatePublicIpAddress: false
+    evidence_requirements:
+      - "No unrestricted inbound access from internet"
+      - "IMDSv2 required on all EC2 instances"
+      - "No public IP addresses on instances in private subnets"
+    remediation_guidance: "Restrict security group ingress to specific CIDR ranges. Set MetadataOptions.HttpTokens to 'required' on all EC2 instances. Avoid assigning public IPs to instances that don't need internet-facing access."
+
+  - id: "HIPAA-164.312(a)(1)-OS-VPC"
+    title: "Network Isolation - OpenSearch in VPC"
+    description: "OpenSearch domains containing ePHI must be deployed within a VPC for network isolation."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-NET-OS-VPC"
+        description: "OpenSearch domains must be deployed in a VPC"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          VPCOptions: null
+    evidence_requirements:
+      - "OpenSearch domain deployed within VPC"
+      - "No public endpoint access"
+    remediation_guidance: "Configure VPCOptions with SubnetIds and SecurityGroupIds to deploy OpenSearch within a VPC."

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "compliance-validation-agent": {
+      "command": "cva-mcp",
+      "args": [],
+      "env": {
+        "ENABLE_SEMANTIC": "false",
+        "REPORTS_BUCKET": "cva-reports-<account>-<region>"
+      },
+      "autoApprove": ["list_frameworks", "validate_compliance"]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+# Cross-resource ("graph") controls for PCI-DSS network segmentation.
+controls:
+  - id: "PCI-DSS-1.3.1-REACH"
+    title: "Restrict Inbound Traffic to the Cardholder Data Environment"
+    description: "System components storing cardholder data must not be directly reachable from untrusted networks. Validates the security groups attached to each database rather than the database alone."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-GRAPH-RDS-PUBLIC"
+        description: "Databases must not reference a security group open to 0.0.0.0/0"
+        check_type: "relationship"
+        resource_types: ["AWS::RDS::DBInstance", "AWS::RDS::DBCluster"]
+        traverse:
+          via: "VPCSecurityGroups"
+          to: "AWS::EC2::SecurityGroup"
+        assert:
+          none_match:
+            property: "SecurityGroupIngress[*].CidrIp"
+            value: "0.0.0.0/0"
+        on_missing_edge: "PASS"
+    evidence_requirements:
+      - "No security group attached to a CDE data store permits ingress from 0.0.0.0/0"
+    remediation_guidance: "Place cardholder-data stores in private subnets and restrict security group ingress to specific trusted CIDR ranges. Do not expose databases to 0.0.0.0/0."

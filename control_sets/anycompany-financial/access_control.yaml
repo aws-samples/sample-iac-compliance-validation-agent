@@ -1,0 +1,101 @@
+controls:
+- id: ANYCO-ACC-001
+  title: IAM policies must follow least privilege
+  description: 'IAM policies MUST follow least privilege. Wildcard actions (e.g.,
+    ''s3:*'', ''ec2:*'') are prohibited. Wildcard resources (''Resource'': ''*'')
+    are prohibited unless scoped by conditions.'
+  category: Access Control
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-001-R1
+    description: Check PolicyDocument.Statement on AWS::IAM::Policy
+    check_type: resource_property
+    resource_types:
+    - AWS::IAM::Policy
+    anti_patterns:
+    - property: PolicyDocument.Statement
+      value: No wildcard actions or resources without conditions
+  evidence_requirements:
+  - Verify IAM policies do not use wildcard actions or resources without proper conditions
+  remediation_guidance: Verify IAM policies do not use wildcard actions or resources
+    without proper conditions
+- id: ANYCO-ACC-002
+  title: Prohibit AdministratorAccess for applications
+  description: The AdministratorAccess managed policy MUST NOT be attached to any
+    role used by applications or automation. It is permitted only for break-glass
+    accounts.
+  category: Access Control
+  severity: CRITICAL
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-002-R1
+    description: Check ManagedPolicyArns on AWS::IAM::Role
+    check_type: resource_property
+    resource_types:
+    - AWS::IAM::Role
+    anti_patterns:
+    - property: ManagedPolicyArns
+      value: arn:aws:iam::aws:policy/AdministratorAccess for application roles
+  evidence_requirements:
+  - Verify application roles do not have AdministratorAccess policy attached
+  remediation_guidance: Verify application roles do not have AdministratorAccess policy
+    attached
+- id: ANYCO-ACC-003
+  title: IAM roles must have permission boundaries
+  description: IAM roles MUST have permission boundaries attached.
+  category: Access Control
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-003-R1
+    description: Check PermissionsBoundary on AWS::IAM::Role
+    check_type: resource_property
+    resource_types:
+    - AWS::IAM::Role
+    required_properties:
+      PermissionsBoundary: null
+  evidence_requirements:
+  - Verify IAM roles have PermissionsBoundary configured
+  remediation_guidance: Verify IAM roles have PermissionsBoundary configured
+- id: ANYCO-ACC-004
+  title: Cross-account roles must use ExternalId
+  description: Cross-account role assumptions MUST include ExternalId conditions.
+  category: Access Control
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-004-R1
+    description: Check AssumeRolePolicyDocument.Statement on AWS::IAM::Role
+    check_type: resource_property
+    resource_types:
+    - AWS::IAM::Role
+    required_properties:
+      AssumeRolePolicyDocument.Statement: null
+  evidence_requirements:
+  - Verify cross-account trust policies include ExternalId condition
+  remediation_guidance: Verify cross-account trust policies include ExternalId condition
+- id: ANYCO-ACC-006
+  title: OpenSearch must enable Fine-Grained Access Control
+  description: OpenSearch domains MUST enable Fine-Grained Access Control (FGAC).
+  category: Access Control
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-006-R1
+    description: Check AdvancedSecurityOptions.Enabled on AWS::OpenSearch::Domain
+    check_type: resource_property
+    resource_types:
+    - AWS::OpenSearch::Domain
+    required_properties:
+      AdvancedSecurityOptions.Enabled:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify OpenSearch domains have Fine-Grained Access Control enabled
+  remediation_guidance: Verify OpenSearch domains have Fine-Grained Access Control
+    enabled

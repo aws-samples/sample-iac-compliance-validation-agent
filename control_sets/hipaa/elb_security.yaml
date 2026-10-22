@@ -1,0 +1,44 @@
+controls:
+  - id: "HIPAA-164.312(e)(1)-ELB"
+    title: "Transmission Security - Load Balancers"
+    description: "Load balancers must enforce HTTPS, log access, and drop invalid headers."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-ELB-HTTPS"
+        description: "ALB/NLB listeners must use HTTPS or TLS protocol"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          Protocol:
+            "$in": ["HTTPS", "TLS"]
+      - rule_id: "HIPAA-ELB-DELETION"
+        description: "Load balancers should have deletion protection enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
+        required_properties:
+          LoadBalancerAttributes: null
+    evidence_requirements:
+      - "All listeners use HTTPS/TLS"
+      - "Access logging enabled"
+      - "Deletion protection active"
+      - "Invalid header fields dropped"
+    remediation_guidance: "Set listener Protocol to HTTPS. Enable access_logs.s3.enabled, deletion_protection.enabled, and routing.http.drop_invalid_header_fields.enabled in LoadBalancerAttributes."
+
+  - id: "HIPAA-164.312(b)-ELB"
+    title: "Audit Controls - Load Balancer Logging"
+    description: "Load balancer access logs provide audit trail for all requests."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-ELB-ACCESSLOGS"
+        description: "Load balancers must have access logging configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::LoadBalancer"]
+        required_properties:
+          LoadBalancerAttributes: null
+    evidence_requirements:
+      - "Access logs enabled with S3 destination"
+    remediation_guidance: "Add LoadBalancerAttributes with access_logs.s3.enabled set to true and access_logs.s3.bucket pointing to a secure log bucket."

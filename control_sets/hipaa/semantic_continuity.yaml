@@ -1,0 +1,58 @@
+controls:
+  - id: "HIPAA-164.308(a)(7)(i)"
+    title: "Contingency Plan - Disaster Recovery Posture"
+    description: "Establish and implement policies and procedures for responding to an emergency or other occurrence that damages systems containing ePHI. The architecture must be able to recover from region-level failures."
+    category: "Administrative Safeguards - Contingency Plan"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Multi-AZ deployment for critical databases and compute"
+      - "Cross-region backup or replication for highest-criticality data"
+      - "Recovery procedures can restore service within defined RTO"
+      - "No single points of failure that would cause total data loss"
+      - "Backup strategy covers all data stores (not just RDS)"
+    remediation_guidance: "Deploy critical databases in Multi-AZ. Configure cross-region replication for disaster recovery. Document RTO/RPO targets and verify they are achievable with current architecture. Ensure all data stores (S3, DynamoDB, RDS, EFS) have backup mechanisms."
+
+  - id: "HIPAA-164.502(b)"
+    title: "Minimum Necessary - Data Minimization"
+    description: "Implement policies to ensure that ePHI disclosed or requested is limited to the minimum necessary to accomplish the intended purpose. Architecture should not collect, store, or retain more PHI than needed."
+    category: "Administrative Safeguards - Privacy"
+    severity: "MEDIUM"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Data retention policies (lifecycle rules) limit how long PHI is stored"
+      - "Lambda functions and services only access the data stores they need"
+      - "No broad data lake that aggregates PHI from multiple sources without justification"
+      - "Log statements do not capture PHI fields unnecessarily"
+    remediation_guidance: "Implement S3 lifecycle rules for PHI data expiration. Scope IAM policies to only the data stores each service requires. Review logging configuration to ensure PHI is not captured in logs without necessity."
+
+  - id: "HIPAA-164.312(a)(2)(ii)"
+    title: "Emergency Access Procedure"
+    description: "Establish and implement procedures for obtaining necessary ePHI during an emergency. Break-glass access mechanisms must exist for authorized personnel."
+    category: "Technical Safeguards - Access Control"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Break-glass IAM role or account exists for emergency access"
+      - "Emergency role has CloudTrail logging (cannot be disabled)"
+      - "Emergency access is time-bounded or requires re-authentication"
+      - "Normal application roles cannot escalate to emergency access"
+    remediation_guidance: "Create a dedicated break-glass IAM role with MFA required. Ensure CloudTrail captures all actions taken under emergency access. Implement session time limits. Document the break-glass procedure."
+
+  - id: "HIPAA-164.312(b)-COMPLETENESS"
+    title: "Audit Logging Completeness"
+    description: "Audit logging must collectively cover ALL access paths to ePHI. It is not sufficient to log some services — every path through which PHI can be read, written, or modified must have an audit trail."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Every data store containing PHI has access logging (S3 access logs, RDS audit logs, DynamoDB Streams)"
+      - "Every API endpoint that serves PHI has request logging"
+      - "Every Lambda function that processes PHI has tracing enabled"
+      - "No blind spots — data cannot be accessed via a path that has no logging"
+      - "Log coverage is consistent (not just some resources)"
+    remediation_guidance: "Map all access paths to PHI data stores. Verify each path has logging enabled: S3 access logs, RDS audit logs, API Gateway access logs, Lambda X-Ray tracing, CloudTrail for API calls. Identify and close any blind spots."

@@ -1,0 +1,38 @@
+controls:
+  - id: "HIPAA-164.308(a)(1)(ii)(A)"
+    title: "Risk Analysis"
+    description: "Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of ePHI held by the covered entity or business associate."
+    category: "Administrative Safeguards - Security Management Process"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Architecture demonstrates defense-in-depth"
+      - "Multiple layers of security controls present"
+      - "Single points of failure identified and mitigated"
+    remediation_guidance: "Ensure architecture includes multiple security layers (network, application, data). Document risk assessment findings and mitigation strategies."
+
+  - id: "HIPAA-164.308(a)(4)(ii)(B)"
+    title: "Access Authorization - Least Privilege"
+    description: "Implement policies and procedures for granting access to ePHI based on the principle of least privilege — only the minimum necessary access required to accomplish the task."
+    category: "Administrative Safeguards - Information Access Management"
+    severity: "HIGH"
+    artifact_types: ["iac", "code"]
+    validation_rules: []
+    evidence_requirements:
+      - "IAM policies follow least privilege principle"
+      - "No overly broad permissions (Resource: * with sensitive actions)"
+      - "Separate roles for separate functions"
+    remediation_guidance: "Review all IAM policies for least privilege. Use specific resource ARNs. Separate duties across distinct roles. Avoid managed policies like AdministratorAccess."
+
+  - id: "HIPAA-164.310(d)(1)"
+    title: "Facility Security - Data Center Controls"
+    description: "Implement policies and procedures to document repairs and modifications to the physical components of a facility which are related to security."
+    category: "Physical Safeguards - Device and Media Controls"
+    severity: "LOW"
+    artifact_types: ["architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Using AWS managed services (physical security inherited)"
+      - "Data residency constraints addressed via region selection"
+    remediation_guidance: "Document that physical security is inherited from AWS under the shared responsibility model. Ensure region selection meets data residency requirements."

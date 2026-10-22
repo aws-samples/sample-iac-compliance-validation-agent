@@ -1,0 +1,83 @@
+controls:
+  - id: "PCI-DSS-7.2.2"
+    title: "Restrict Access - No Wildcard Permissions"
+    description: "Access control systems must deny all access by default and only permit necessary actions."
+    category: "Requirement 7 - Restrict Access to System Components"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-IAM-NOSTAR-ACTION"
+        description: "IAM policies must not use wildcard (*) actions"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Action"
+            value: "*"
+      - rule_id: "PCI-IAM-NOSTAR-RESOURCE"
+        description: "IAM policies must not use wildcard (*) resources"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Resource"
+            value: "*"
+      - rule_id: "PCI-IAM-NOADMIN"
+        description: "No AdministratorAccess managed policy attached"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "ManagedPolicyArns[0]"
+            value: "arn:aws:iam::aws:policy/AdministratorAccess"
+    evidence_requirements:
+      - "No wildcard permissions"
+      - "No full admin policies"
+      - "Least privilege enforced"
+    remediation_guidance: "Replace wildcard actions/resources with specific ones. Remove AdministratorAccess."
+
+  - id: "PCI-DSS-10.6.1"
+    title: "Log and Monitor - RDS Monitoring"
+    description: "RDS and Redshift emit monitoring and audit logs (enhanced monitoring, CloudWatch log exports, audit logging) so security events can be reviewed."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-MON-RDS-ENHANCED"
+        description: "RDS must have enhanced monitoring"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MonitoringInterval:
+            "$gte": 1
+      - rule_id: "PCI-MON-RDS-LOGS"
+        description: "RDS must export logs to CloudWatch"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          EnableCloudwatchLogsExports: null
+      - rule_id: "PCI-MON-REDSHIFT-LOGS"
+        description: "Redshift must have audit logging"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          LoggingProperties: null
+    evidence_requirements:
+      - "Enhanced monitoring active"
+      - "Logs exported for analysis"
+      - "Anomaly detection possible"
+    remediation_guidance: "Set MonitoringInterval >= 1, configure EnableCloudwatchLogsExports, enable LoggingProperties on Redshift."
+
+  - id: "PCI-DSS-3.4.1"
+    title: "Protect Stored Data - EFS Encryption"
+    description: "EFS file systems that may hold cardholder data are encrypted at rest."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-ENC-EFS-002"
+        description: "EFS file systems must have KMS encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::EFS::FileSystem"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "EFS encrypted with CMK"
+    remediation_guidance: "Set Encrypted: true and KmsKeyId on EFS file systems."

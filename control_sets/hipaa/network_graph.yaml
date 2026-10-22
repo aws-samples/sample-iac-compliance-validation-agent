@@ -1,0 +1,48 @@
+# Cross-resource ("graph") controls — evaluate a resource together with the
+# resources it references, catching exposures that single-resource checks cannot.
+controls:
+  - id: "HIPAA-164.312(e)(1)-REACH"
+    title: "Transmission Security - Data Stores Not Publicly Reachable"
+    description: "ePHI data stores must not be reachable from the public internet. Validates the security groups attached to each database, not the database in isolation."
+    category: "Technical Safeguards - Transmission Security"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-GRAPH-RDS-PUBLIC"
+        description: "RDS instances must not reference a security group open to 0.0.0.0/0"
+        check_type: "relationship"
+        resource_types: ["AWS::RDS::DBInstance", "AWS::RDS::DBCluster"]
+        traverse:
+          via: "VPCSecurityGroups"
+          to: "AWS::EC2::SecurityGroup"
+        assert:
+          none_match:
+            property: "SecurityGroupIngress[*].CidrIp"
+            value: "0.0.0.0/0"
+        on_missing_edge: "PASS"
+    evidence_requirements:
+      - "No security group attached to a PHI database permits ingress from 0.0.0.0/0"
+    remediation_guidance: "Restrict the database's security group ingress to specific private CIDR ranges or peered security groups. Never expose a data store containing ePHI to 0.0.0.0/0."
+
+  - id: "HIPAA-164.312(b)-AUDIT-DURABLE"
+    title: "Audit Controls - Trail Logs Stored Durably"
+    description: "CloudTrail audit logs must be written to an S3 bucket with versioning enabled so audit records cannot be silently overwritten or lost."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-GRAPH-TRAIL-BUCKET-VERSIONED"
+        description: "CloudTrail trail must reference an S3 bucket with versioning enabled"
+        check_type: "relationship"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        traverse:
+          via: "S3BucketName"
+          to: "AWS::S3::Bucket"
+        assert:
+          any_match:
+            property: "VersioningConfiguration.Status"
+            value: "Enabled"
+        on_missing_edge: "PASS"
+    evidence_requirements:
+      - "Trail destination bucket has versioning enabled"
+    remediation_guidance: "Enable versioning on the S3 bucket that receives CloudTrail logs so audit records are immutable against overwrite. Set VersioningConfiguration.Status to Enabled."

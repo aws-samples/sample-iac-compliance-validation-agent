@@ -1,0 +1,100 @@
+controls:
+  - id: "AU-3"
+    title: "Content of Audit Records"
+    description: "Ensure audit records contain information that establishes what events occurred, sources of events, and outcomes."
+    category: "Audit and Accountability (AU)"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU3-CT-MULTI"
+        description: "CloudTrail must be multi-region"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          IsMultiRegionTrail: true
+      - rule_id: "FR-AU3-CT-GLOBAL"
+        description: "CloudTrail must include global service events"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          IncludeGlobalServiceEvents: true
+      - rule_id: "FR-AU3-CT-VALIDATION"
+        description: "CloudTrail must enable log file validation"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          EnableLogFileValidation: true
+      - rule_id: "FR-AU3-CT-KMS"
+        description: "CloudTrail must encrypt logs with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          KMSKeyId: null
+      - rule_id: "FR-AU3-CT-CW"
+        description: "CloudTrail must integrate with CloudWatch Logs"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudTrail::Trail"]
+        required_properties:
+          CloudWatchLogsLogGroupArn: null
+    evidence_requirements:
+      - "Complete audit trail across all regions"
+      - "Log integrity verification"
+      - "Encryption of audit records"
+      - "Real-time log analysis capability"
+    remediation_guidance: "Configure CloudTrail with IsMultiRegionTrail, EnableLogFileValidation, KMSKeyId, CloudWatchLogsLogGroupArn, and IncludeGlobalServiceEvents all enabled."
+
+  - id: "SC-12"
+    title: "Cryptographic Key Establishment and Management"
+    description: "Establish and manage cryptographic keys when cryptography is employed within the system."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC12-KMS-ROTATION"
+        description: "KMS keys must have automatic rotation"
+        check_type: "resource_property"
+        resource_types: ["AWS::KMS::Key"]
+        required_properties:
+          EnableKeyRotation: true
+      - rule_id: "FR-SC12-SECRET-ROTATION"
+        description: "Secrets must have rotation configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::SecretsManager::Secret"]
+        required_properties:
+          RotationRules: null
+      - rule_id: "FR-SC12-SECRET-KMS"
+        description: "Secrets must be encrypted with KMS CMK"
+        check_type: "resource_property"
+        resource_types: ["AWS::SecretsManager::Secret"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "Key rotation enabled"
+      - "Secret rotation configured"
+      - "CMK encryption for secrets"
+    remediation_guidance: "Enable key rotation on KMS keys. Configure rotation rules on secrets. Use KMS CMK instead of default encryption."
+
+  - id: "SI-2"
+    title: "Flaw Remediation"
+    description: "Identify, report, and correct system flaws in a timely manner."
+    category: "System and Information Integrity (SI)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SI2-RUNTIME"
+        description: "Lambda must use supported (non-deprecated) runtimes"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          Runtime:
+            "$in": ["python3.13", "python3.12", "python3.11", "nodejs22.x", "nodejs20.x", "nodejs18.x", "java21", "java17", "dotnet8", "ruby3.3", "ruby3.2", "provided.al2023", "provided.al2"]
+      - rule_id: "FR-SI2-RDS-PATCH"
+        description: "RDS must have auto minor version upgrade"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          AutoMinorVersionUpgrade: true
+    evidence_requirements:
+      - "No end-of-life software components"
+      - "Automated patching where available"
+    remediation_guidance: "Update Lambda runtimes to supported versions. Enable AutoMinorVersionUpgrade on RDS."

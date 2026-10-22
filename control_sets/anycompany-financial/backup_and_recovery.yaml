@@ -1,0 +1,77 @@
+controls:
+- id: ANYCO-BK-001
+  title: RDS instances must have proper backup configuration
+  description: 'RDS instances MUST have: Deletion protection enabled, Automated backups
+    with retention >= 14 days, Multi-AZ deployment for production workloads, Copy
+    tags to snapshots enabled.'
+  category: Backup & Recovery
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-BK-001-R1
+    description: Check DeletionProtection on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      DeletionProtection:
+        $equals: 'true'
+  - rule_id: ANYCO-BK-001-R2
+    description: Check BackupRetentionPeriod on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      BackupRetentionPeriod: null
+  - rule_id: ANYCO-BK-001-R3
+    description: Check MultiAZ on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      MultiAZ:
+        $equals: true for production workloads
+  - rule_id: ANYCO-BK-001-R4
+    description: Check CopyTagsToSnapshot on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      CopyTagsToSnapshot:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify RDS instances have deletion protection, backup retention, Multi-AZ, and
+    tag copying enabled
+  remediation_guidance: Verify RDS instances have deletion protection, backup retention,
+    Multi-AZ, and tag copying enabled
+- id: ANYCO-BK-002
+  title: DynamoDB tables must have backup protection
+  description: 'DynamoDB tables MUST have: Point-in-time recovery enabled, Deletion
+    protection enabled.'
+  category: Backup & Recovery
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-BK-002-R1
+    description: Check PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled
+      on AWS::DynamoDB::Table
+    check_type: resource_property
+    resource_types:
+    - AWS::DynamoDB::Table
+    required_properties:
+      PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled:
+        $equals: 'true'
+  - rule_id: ANYCO-BK-002-R2
+    description: Check DeletionProtectionEnabled on AWS::DynamoDB::Table
+    check_type: resource_property
+    resource_types:
+    - AWS::DynamoDB::Table
+    required_properties:
+      DeletionProtectionEnabled:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify DynamoDB tables have point-in-time recovery and deletion protection enabled
+  remediation_guidance: Verify DynamoDB tables have point-in-time recovery and deletion
+    protection enabled

@@ -1,0 +1,9 @@
+# ASH (Automated Security Helper) configuration.
+project_name: compliance-validation-agent
+global_settings:
+  ignore_paths:
+    - path: "samples/**"
+      reason: >-
+        Intentionally non-compliant IaC fixtures used to exercise the validator
+        (see samples/README.md). Never deployed. Excluded so they do not mask a
+        real finding elsewhere in the repository.

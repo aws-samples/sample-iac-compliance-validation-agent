@@ -1,0 +1,119 @@
+controls:
+  - id: "HIPAA-164.312(a)(2)(iv)-RDS-CLUSTER"
+    title: "Encryption - RDS Aurora Clusters"
+    description: "Aurora clusters storing ePHI must have encryption, deletion protection, and adequate backups."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-RDS-CLUSTER-ENC"
+        description: "Aurora clusters must have storage encryption enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "HIPAA-RDS-CLUSTER-DELETION"
+        description: "Aurora clusters must have deletion protection"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          DeletionProtection: true
+      - rule_id: "HIPAA-RDS-CLUSTER-BACKUP"
+        description: "Aurora clusters must retain backups for at least 7 days"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          BackupRetentionPeriod:
+            "$gte": 7
+      - rule_id: "HIPAA-RDS-CLUSTER-IAM"
+        description: "Aurora clusters should enable IAM authentication"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          EnableIAMDatabaseAuthentication: true
+    evidence_requirements:
+      - "Encryption at rest enabled"
+      - "Deletion protection active"
+      - "Backup retention >= 7 days"
+      - "IAM authentication enabled"
+    remediation_guidance: "Set StorageEncrypted: true, DeletionProtection: true, BackupRetentionPeriod >= 7, EnableIAMDatabaseAuthentication: true."
+
+  - id: "HIPAA-164.312(b)-LOGGROUP"
+    title: "Audit Controls - CloudWatch Log Group Security"
+    description: "CloudWatch Log Groups containing audit data must be encrypted and have adequate retention."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-LOG-KMS"
+        description: "CloudWatch Log Groups must be encrypted with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          KmsKeyId: null
+      - rule_id: "HIPAA-LOG-RETENTION"
+        description: "CloudWatch Log Groups must have retention configured (not infinite)"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          RetentionInDays:
+            "$gte": 90
+    evidence_requirements:
+      - "Log groups encrypted with KMS CMK"
+      - "Retention period configured (minimum 90 days for HIPAA)"
+    remediation_guidance: "Set KmsKeyId on all log groups. Set RetentionInDays to at least 90 (HIPAA requires 6-year retention for some records — configure accordingly)."
+
+  - id: "HIPAA-164.312(a)(2)(iv)-EBS"
+    title: "Encryption - EBS Volumes"
+    description: "EBS volumes attached to instances processing ePHI must be encrypted."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-EBS-ENCRYPTED"
+        description: "EBS volumes must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Volume"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "HIPAA-EBS-KMS"
+        description: "EBS volumes should use KMS CMK"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Volume"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "All EBS volumes encrypted"
+      - "KMS CMK used for key management"
+    remediation_guidance: "Set Encrypted: true and specify KmsKeyId on all EBS volumes."
+
+  - id: "HIPAA-164.312(a)(2)(iv)-REDSHIFT"
+    title: "Encryption - Redshift Clusters"
+    description: "Redshift clusters containing ePHI must be encrypted, not publicly accessible, and have audit logging."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-RS-ENCRYPTED"
+        description: "Redshift clusters must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "HIPAA-RS-NOPUBLIC"
+        description: "Redshift clusters must not be publicly accessible"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          PubliclyAccessible: false
+      - rule_id: "HIPAA-RS-LOGGING"
+        description: "Redshift clusters must have audit logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          LoggingProperties: null
+    evidence_requirements:
+      - "Encryption enabled"
+      - "Not publicly accessible"
+      - "Audit logging active"
+    remediation_guidance: "Set Encrypted: true, PubliclyAccessible: false, and configure LoggingProperties with S3 bucket."

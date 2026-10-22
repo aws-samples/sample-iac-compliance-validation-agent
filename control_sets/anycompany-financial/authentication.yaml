@@ -1,0 +1,30 @@
+controls:
+- id: ANYCO-ACC-005
+  title: RDS must enable IAM database authentication
+  description: RDS and Aurora clusters MUST enable IAM database authentication. Long-lived
+    database passwords are prohibited for application access.
+  category: Authentication
+  severity: HIGH
+  artifact_types:
+  - iac
+  validation_rules:
+  - rule_id: ANYCO-ACC-005-R1
+    description: Check EnableIAMDatabaseAuthentication on AWS::RDS::DBInstance
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBInstance
+    required_properties:
+      EnableIAMDatabaseAuthentication:
+        $equals: 'true'
+  - rule_id: ANYCO-ACC-005-R2
+    description: Check EnableIAMDatabaseAuthentication on AWS::RDS::DBCluster
+    check_type: resource_property
+    resource_types:
+    - AWS::RDS::DBCluster
+    required_properties:
+      EnableIAMDatabaseAuthentication:
+        $equals: 'true'
+  evidence_requirements:
+  - Verify RDS instances and clusters have IAM database authentication enabled
+  remediation_guidance: Verify RDS instances and clusters have IAM database authentication
+    enabled

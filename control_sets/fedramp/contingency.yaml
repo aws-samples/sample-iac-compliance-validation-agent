@@ -1,0 +1,58 @@
+controls:
+  - id: "CP-9"
+    title: "System Backup"
+    description: "Conduct backups of user-level and system-level information contained in the system."
+    category: "Contingency Planning (CP)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-CP9-RDS-001"
+        description: "RDS must have automated backups with adequate retention"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          BackupRetentionPeriod:
+            "$gte": 7
+      - rule_id: "FR-CP9-DDB-001"
+        description: "DynamoDB should have point-in-time recovery"
+        check_type: "resource_property"
+        resource_types: ["AWS::DynamoDB::Table"]
+        required_properties:
+          PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled: true
+      - rule_id: "FR-CP9-S3-001"
+        description: "S3 buckets should have versioning for data recovery"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          VersioningConfiguration.Status:
+            "$equals": "Enabled"
+    evidence_requirements:
+      - "Automated backups configured for all databases"
+      - "Backup retention meets organizational requirements (minimum 7 days)"
+      - "Backup integrity verified periodically"
+    remediation_guidance: "Enable automated backups on RDS with at least 7-day retention. Enable PITR on DynamoDB. Enable versioning on S3 for data recovery."
+
+  - id: "CP-10"
+    title: "System Recovery and Reconstitution"
+    description: "Provide for the recovery and reconstitution of the system to a known state within organization-defined time period."
+    category: "Contingency Planning (CP)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-CP10-RDS-001"
+        description: "RDS should use Multi-AZ for recovery capability"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MultiAZ: true
+      - rule_id: "FR-CP10-RDS-002"
+        description: "RDS must have deletion protection to prevent accidental loss"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          DeletionProtection: true
+    evidence_requirements:
+      - "Recovery procedures documented and tested"
+      - "Recovery time objective (RTO) defined and achievable"
+      - "High availability configured for critical systems"
+    remediation_guidance: "Deploy RDS in Multi-AZ. Enable deletion protection. Document and test recovery procedures. Define and validate RTO/RPO targets."

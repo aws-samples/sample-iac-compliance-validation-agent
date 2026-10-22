@@ -1,0 +1,67 @@
+controls:
+  - id: "PCI-DSS-4.2.1-CDN"
+    title: "Protect Data in Transit - CloudFront HTTPS"
+    description: "CloudFront distributions must enforce HTTPS with TLS 1.2 minimum."
+    category: "Requirement 4 - Protect Cardholder Data in Transit"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-CDN-HTTPS"
+        description: "CloudFront must enforce HTTPS for viewers"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy:
+            "$in": ["redirect-to-https", "https-only"]
+      - rule_id: "PCI-CDN-TLS12"
+        description: "CloudFront must use TLS 1.2 minimum"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.ViewerCertificate.MinimumProtocolVersion:
+            "$in": ["TLSv1.2_2021", "TLSv1.2_2019", "TLSv1.2_2018"]
+    evidence_requirements:
+      - "HTTPS enforced for all viewers"
+      - "TLS 1.2 minimum"
+    remediation_guidance: "Set ViewerProtocolPolicy to redirect-to-https or https-only. Set MinimumProtocolVersion to TLSv1.2_2021."
+
+  - id: "PCI-DSS-4.2.1-ELB"
+    title: "Protect Data in Transit - Load Balancer HTTPS"
+    description: "Load balancer listeners must use HTTPS/TLS protocol."
+    category: "Requirement 4 - Protect Cardholder Data in Transit"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-ELB-PROTOCOL"
+        description: "ALB/NLB listeners must use HTTPS or TLS"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          Protocol:
+            "$in": ["HTTPS", "TLS"]
+    evidence_requirements:
+      - "No HTTP listeners without redirect"
+    remediation_guidance: "Set listener Protocol to HTTPS or TLS. For HTTP listeners, set DefaultAction to redirect to HTTPS."
+
+  - id: "PCI-DSS-6.4.2"
+    title: "Protect Web Applications - WAF"
+    description: "Public-facing web applications must have WAF protection."
+    category: "Requirement 6 - Develop and Maintain Secure Systems"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-WAF-CDN"
+        description: "CloudFront must have WAF WebACL associated"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.WebACLId: null
+      - rule_id: "PCI-WAF-API"
+        description: "API Gateway must have WAF WebACL associated"
+        check_type: "resource_property"
+        resource_types: ["AWS::ApiGateway::Stage"]
+        required_properties:
+          WebAclArn: null
+    evidence_requirements:
+      - "WAF active on all public-facing endpoints"
+    remediation_guidance: "Associate a WAFv2 WebACL with CloudFront distributions and API Gateway stages."

@@ -1,0 +1,60 @@
+controls:
+  - id: "HIPAA-164.312(a)(1)-IAM"
+    title: "Access Control - IAM Least Privilege"
+    description: "IAM policies must follow the principle of least privilege with no wildcard actions or resources."
+    category: "Technical Safeguards - Access Control"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-IAM-NOSTAR-ACTION"
+        description: "IAM roles must not use wildcard (*) actions"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Action"
+            value: "*"
+      - rule_id: "HIPAA-IAM-NOSTAR-RESOURCE"
+        description: "IAM roles must not use wildcard (*) resources with Allow"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Resource"
+            value: "*"
+      - rule_id: "HIPAA-IAM-NOADMIN"
+        description: "IAM roles must not attach AdministratorAccess managed policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "ManagedPolicyArns[0]"
+            value: "arn:aws:iam::aws:policy/AdministratorAccess"
+    evidence_requirements:
+      - "No wildcard actions in IAM policies"
+      - "No wildcard resources with Allow effect"
+      - "No AdministratorAccess managed policy"
+      - "Specific resource ARNs used"
+    remediation_guidance: "Replace wildcard actions with specific API actions needed. Scope Resource to specific ARNs. Remove AdministratorAccess and replace with least-privilege custom policies."
+
+  - id: "HIPAA-164.312(a)(1)-KMS"
+    title: "Access Control - KMS Key Management"
+    description: "KMS keys used for ePHI encryption must have rotation enabled and restricted access."
+    category: "Technical Safeguards - Access Control"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-KMS-ROTATION"
+        description: "KMS keys must have automatic rotation enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::KMS::Key"]
+        required_properties:
+          EnableKeyRotation: true
+      - rule_id: "HIPAA-KMS-ENABLED"
+        description: "KMS keys must be in enabled state"
+        check_type: "resource_property"
+        resource_types: ["AWS::KMS::Key"]
+        required_properties:
+          Enabled: true
+    evidence_requirements:
+      - "Key rotation enabled"
+      - "Keys in enabled state"
+      - "Key policies restrict access"
+    remediation_guidance: "Enable automatic key rotation on all KMS CMKs. Ensure key policies follow least privilege."

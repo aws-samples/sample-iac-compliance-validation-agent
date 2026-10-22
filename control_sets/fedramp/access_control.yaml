@@ -1,0 +1,91 @@
+controls:
+  - id: "AC-2"
+    title: "Account Management"
+    description: "Manage information system accounts including establishing, activating, modifying, reviewing, disabling, and removing accounts."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AC2-IAM-001"
+        description: "IAM roles must not use wildcard principals"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "AssumeRolePolicyDocument.Statement[0].Principal.AWS"
+            value: "*"
+      - rule_id: "FR-AC2-OS-001"
+        description: "OpenSearch must have fine-grained access control for account management"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          AdvancedSecurityOptions.Enabled: true
+    evidence_requirements:
+      - "Account management procedures documented"
+      - "No shared or generic accounts"
+      - "Account review performed periodically"
+    remediation_guidance: "Use specific IAM principals. Enable fine-grained access control. Implement automated account lifecycle management."
+
+  - id: "AC-3"
+    title: "Access Enforcement"
+    description: "Enforce approved authorizations for logical access to information and system resources."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AC3-S3-001"
+        description: "S3 buckets must block public access"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          PublicAccessBlockConfiguration:
+            BlockPublicAcls: true
+            BlockPublicPolicy: true
+            IgnorePublicAcls: true
+            RestrictPublicBuckets: true
+      - rule_id: "FR-AC3-RDS-001"
+        description: "RDS must not be publicly accessible"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          PubliclyAccessible: false
+    evidence_requirements:
+      - "Role-based access control implemented"
+      - "Principle of least privilege enforced"
+      - "No public access to system resources without authorization"
+    remediation_guidance: "Implement RBAC via IAM. Block public access on S3. Set PubliclyAccessible to false on RDS. Use VPC endpoints for private access to AWS services."
+
+  - id: "AC-4"
+    title: "Information Flow Enforcement"
+    description: "Enforce approved authorizations for controlling the flow of information within the system and between connected systems."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AC4-LAMBDA-001"
+        description: "Lambda functions must be in VPC for network flow control"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          VpcConfig: null
+    evidence_requirements:
+      - "Network segmentation between security zones"
+      - "Information flow policies enforced at network boundaries"
+    remediation_guidance: "Deploy compute resources in VPCs with appropriate security groups. Use NACLs for subnet-level flow control. Implement VPC flow logs for monitoring."
+
+  - id: "AC-17"
+    title: "Remote Access"
+    description: "Establish usage restrictions, configuration/connection requirements, and implementation guidance for each type of remote access allowed."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AC17-OS-001"
+        description: "OpenSearch must enforce HTTPS for all remote access"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.EnforceHTTPS: true
+    evidence_requirements:
+      - "All remote access encrypted"
+      - "Remote access methods documented and authorized"
+    remediation_guidance: "Enforce HTTPS on all service endpoints. Use VPN or AWS PrivateLink for administrative access. Disable any plaintext remote access protocols."

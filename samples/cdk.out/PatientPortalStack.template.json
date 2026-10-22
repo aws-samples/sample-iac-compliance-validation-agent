@@ -1,0 +1,26 @@
+{
+  "Description": "Synthesized CDK stack for the CVA demo - patient portal data layer with intentional compliance gaps.",
+  "Resources": {
+    "PatientTable5A2E4E52": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "patient-table",
+        "KeySchema": [{"AttributeName": "patientId", "KeyType": "HASH"}],
+        "AttributeDefinitions": [{"AttributeName": "patientId", "AttributeType": "S"}],
+        "BillingMode": "PAY_PER_REQUEST"
+      },
+      "Metadata": {"aws:cdk:path": "PatientPortalStack/PatientTable/Resource"}
+    },
+    "ExportsBucketA1B2C3D4": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": "patient-exports"
+      },
+      "Metadata": {"aws:cdk:path": "PatientPortalStack/ExportsBucket/Resource"}
+    },
+    "CDKMetadata": {
+      "Type": "AWS::CDK::Metadata",
+      "Properties": {"Analytics": "v2:deflate64:demo"}
+    }
+  }
+}

@@ -1,0 +1,69 @@
+controls:
+  - id: "PCI-DSS-7.2.3"
+    title: "Separation of Duties"
+    description: "Access control systems must enforce separation of duties. No single IAM role should have both administrative and data access permissions. Deployment roles must be separate from runtime roles."
+    category: "Requirement 7 - Restrict Access to System Components"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Different IAM roles for different functions (deploy vs runtime vs admin)"
+      - "No single role combines data access + IAM management + deployment"
+      - "Lambda execution roles are separate from deployment roles"
+      - "Database admin roles are separate from application access roles"
+    remediation_guidance: "Create separate IAM roles for each function: deployment, application runtime, database administration, and security operations. No role should combine privileges across these boundaries."
+
+  - id: "PCI-DSS-1.2.1"
+    title: "Network Segmentation of CDE"
+    description: "The cardholder data environment (CDE) must be isolated from non-CDE systems through network segmentation. Security groups, subnets, and VPC design must create clear boundaries."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "CDE resources are in dedicated subnets separate from non-CDE"
+      - "Security groups restrict cross-boundary traffic"
+      - "No shared security groups between CDE and non-CDE resources"
+      - "Network path from internet to CDE passes through multiple controls (ALB → WAF → private subnet)"
+    remediation_guidance: "Place CDE resources in dedicated private subnets. Use separate security groups for CDE vs non-CDE. Ensure no direct internet path to CDE — all traffic routes through WAF and load balancers. Document the network segmentation diagram."
+
+  - id: "PCI-DSS-12.10.1"
+    title: "Incident Response Plan"
+    description: "An incident response plan must be established and the infrastructure must support detection, alerting, containment, and investigation of security incidents."
+    category: "Requirement 12 - Support Information Security with Policies"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Detection: CloudTrail, GuardDuty, or equivalent active"
+      - "Alerting: CloudWatch alarms or EventBridge rules with SNS notifications"
+      - "Investigation: Logs aggregated and searchable (CloudWatch Logs, OpenSearch)"
+      - "Containment: Ability to isolate compromised resources (security group changes, IAM revocation)"
+    remediation_guidance: "Deploy CloudTrail + CloudWatch alarms + SNS for detection and alerting. Aggregate logs centrally. Ensure security group and IAM configurations allow rapid isolation of compromised resources."
+
+  - id: "PCI-DSS-3.6.1"
+    title: "Key Management Lifecycle"
+    description: "Cryptographic key management processes must ensure keys are not shared across unrelated systems. Key compromise in one system must not expose data in another."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Separate KMS keys for separate services"
+      - "No single key used across S3, RDS, DynamoDB, and SQS"
+      - "Key policies restrict access to specific services"
+      - "Key aliases clearly identify purpose"
+    remediation_guidance: "Create dedicated KMS keys per service or data classification. Review key policies to ensure access is restricted to the service that needs it. Use key aliases like 'alias/rds-prod' for governance."
+
+  - id: "PCI-DSS-6.5.1"
+    title: "Secure Defaults Assessment"
+    description: "Verify that infrastructure does not rely on insecure defaults. Resources using AWS default settings that happen to be secure today may become insecure if defaults change."
+    category: "Requirement 6 - Develop and Maintain Secure Systems"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Security-relevant properties are explicitly set, not omitted to rely on defaults"
+      - "Encryption is explicitly enabled (not relying on account-level default encryption)"
+      - "Access restrictions are explicitly configured (not relying on private-by-default)"
+    remediation_guidance: "Explicitly configure all security-relevant properties rather than relying on defaults. Set encryption, access restrictions, and logging explicitly even when the current default happens to be secure."

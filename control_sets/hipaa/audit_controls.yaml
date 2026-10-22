@@ -1,0 +1,96 @@
+controls:
+  - id: "HIPAA-164.312(b)"
+    title: "Audit Controls"
+    description: "Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use ePHI."
+    category: "Technical Safeguards - Audit Controls"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-AUDIT-LAMBDA-001"
+        description: "Lambda functions must have X-Ray tracing enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          TracingConfig.Mode:
+            "$equals": "Active"
+      - rule_id: "HIPAA-AUDIT-OS-001"
+        description: "OpenSearch domains should have logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          LogPublishingOptions: null
+      - rule_id: "HIPAA-AUDIT-API-001"
+        description: "API Gateway stages must have access logging enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::ApiGateway::Stage"]
+        required_properties:
+          AccessLogSetting: null
+    evidence_requirements:
+      - "Audit logging enabled on all systems processing PHI"
+      - "Logs capture access events with timestamp, identity, action"
+      - "Log retention meets minimum 6-year requirement"
+    remediation_guidance: "Enable X-Ray tracing on Lambda functions. Configure log publishing on OpenSearch domains. Enable access logging on API Gateway stages. Ensure CloudTrail is enabled for all AWS API activity."
+
+  - id: "HIPAA-164.312(c)(1)"
+    title: "Integrity Controls"
+    description: "Implement policies and procedures to protect ePHI from improper alteration or destruction."
+    category: "Technical Safeguards - Integrity"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-INT-S3-001"
+        description: "S3 buckets should have versioning enabled to protect against accidental deletion"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          VersioningConfiguration.Status:
+            "$equals": "Enabled"
+      - rule_id: "HIPAA-INT-RDS-001"
+        description: "RDS instances should have deletion protection enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          DeletionProtection: true
+      - rule_id: "HIPAA-INT-RDS-002"
+        description: "RDS instances should have adequate backup retention"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          BackupRetentionPeriod:
+            "$gte": 7
+      - rule_id: "HIPAA-INT-DDB-001"
+        description: "DynamoDB tables should have point-in-time recovery enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::DynamoDB::Table"]
+        required_properties:
+          PointInTimeRecoverySpecification.PointInTimeRecoveryEnabled: true
+    evidence_requirements:
+      - "Versioning or point-in-time recovery enabled on data stores"
+      - "Deletion protection enabled"
+      - "Backup retention of at least 7 days"
+    remediation_guidance: "Enable versioning on S3 buckets. Enable deletion protection and set backup retention to at least 7 days on RDS. Enable PITR on DynamoDB tables."
+
+  - id: "HIPAA-164.308(a)(7)(ii)(A)"
+    title: "Data Backup Plan"
+    description: "Establish and implement procedures to create and maintain retrievable exact copies of ePHI."
+    category: "Administrative Safeguards - Contingency Plan"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "HIPAA-BACKUP-RDS-001"
+        description: "RDS instances must have automated backups enabled"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          BackupRetentionPeriod:
+            "$gte": 1
+      - rule_id: "HIPAA-BACKUP-RDS-002"
+        description: "RDS instances should use Multi-AZ for high availability"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MultiAZ: true
+    evidence_requirements:
+      - "Automated backups configured"
+      - "Multi-AZ deployment for critical databases"
+    remediation_guidance: "Enable automated backups with appropriate retention period. Deploy RDS in Multi-AZ configuration for production PHI databases."

@@ -1,0 +1,107 @@
+controls:
+  - id: "PCI-DSS-3.5.1-CLUSTER"
+    title: "Protect Stored Data - Aurora Cluster Encryption"
+    description: "Aurora clusters in the CDE must have encryption at rest enabled."
+    category: "Requirement 3 - Protect Stored Account Data"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-ENC-CLUSTER-001"
+        description: "Aurora clusters must have storage encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "PCI-ENC-EBS-001"
+        description: "EBS volumes must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Volume"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "PCI-ENC-REDSHIFT-001"
+        description: "Redshift clusters must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "PCI-ENC-EFS-001"
+        description: "EFS file systems must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::EFS::FileSystem"]
+        required_properties:
+          Encrypted: true
+    evidence_requirements:
+      - "All data stores in CDE encrypted at rest"
+    remediation_guidance: "Set StorageEncrypted/Encrypted to true on all data stores."
+
+  - id: "PCI-DSS-1.3.1-NETWORK"
+    title: "Network Security - No Public Database Access"
+    description: "Databases in the CDE must never be publicly accessible from the internet."
+    category: "Requirement 1 - Network Security Controls"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-NET-REDSHIFT-001"
+        description: "Redshift must not be publicly accessible"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          PubliclyAccessible: false
+      - rule_id: "PCI-NET-RDS-CLUSTER"
+        description: "Aurora clusters must not be publicly accessible (via instances)"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          PubliclyAccessible: false
+    evidence_requirements:
+      - "No databases accessible from internet"
+    remediation_guidance: "Set PubliclyAccessible: false on all database resources."
+
+  - id: "PCI-DSS-10.2.1-LOGGROUP"
+    title: "Log and Monitor - Log Group Security"
+    description: "CloudWatch Log Groups storing CDE audit data must be encrypted and retained."
+    category: "Requirement 10 - Log and Monitor All Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-LOG-KMS-001"
+        description: "CloudWatch Log Groups must be encrypted with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          KmsKeyId: null
+      - rule_id: "PCI-LOG-RETENTION-001"
+        description: "Log Groups must retain for at least 365 days (12 months immediate)"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          RetentionInDays:
+            "$gte": 365
+    evidence_requirements:
+      - "Logs encrypted with KMS"
+      - "12-month retention (3 months immediately available per PCI)"
+    remediation_guidance: "Set KmsKeyId and RetentionInDays >= 365 on all log groups."
+
+  - id: "PCI-DSS-8.2.4"
+    title: "Strong Authentication - Secret Rotation"
+    description: "Secrets Manager secrets have automatic rotation configured and are encrypted with a KMS key."
+    category: "Requirement 8 - Identify Users and Authenticate Access"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "PCI-AUTH-SECRET-ROTATION"
+        description: "Secrets must have rotation configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::SecretsManager::Secret"]
+        required_properties:
+          RotationRules: null
+      - rule_id: "PCI-AUTH-SECRET-KMS"
+        description: "Secrets must use KMS encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::SecretsManager::Secret"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "Automatic rotation configured"
+      - "Secrets encrypted with CMK"
+    remediation_guidance: "Configure RotationRules with AutomaticallyAfterDays <= 90. Set KmsKeyId."

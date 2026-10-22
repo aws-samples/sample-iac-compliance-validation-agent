@@ -1,0 +1,99 @@
+controls:
+  - id: "AC-5"
+    title: "Separation of Duties"
+    description: "Define and document separation of duties. Implement separation of duties through assigned system access authorizations. No single role should combine incompatible functions."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Distinct IAM roles for administration, deployment, and application runtime"
+      - "No single role combines data access with IAM management"
+      - "Deployment pipelines use separate credentials from production runtime"
+      - "Security operations roles are distinct from development roles"
+    remediation_guidance: "Implement separate IAM roles for each organizational function. Ensure no role combines incompatible privileges (e.g., deploy + audit, data access + IAM admin)."
+
+  - id: "SC-3"
+    title: "Security Function Isolation"
+    description: "Isolate security functions from nonsecurity functions. Security mechanisms (logging, encryption, access control) must not be bypassable through the application layer."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Logging infrastructure is in a separate account or has restricted access"
+      - "KMS keys are not manageable by application roles"
+      - "CloudTrail cannot be disabled by application IAM roles"
+      - "Security groups are managed by security team roles, not application roles"
+    remediation_guidance: "Ensure security infrastructure (logging, key management, audit trail) is managed by dedicated security roles that application teams cannot modify. Consider a separate security account for log aggregation."
+
+  - id: "SC-7(5)"
+    title: "Boundary Protection - Deny by Default"
+    description: "Deny network communications traffic by default and allow network communications traffic by exception. Verify that the overall network architecture follows deny-all-allow-by-exception."
+    category: "System and Communications Protection (SC)"
+    severity: "CRITICAL"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "Security groups default deny inbound (AWS default — but verify no 0.0.0.0/0 rules)"
+      - "NACLs configured with explicit deny rules for sensitive subnets"
+      - "Only specific ports open for specific sources"
+      - "Egress is restricted where possible (not all-traffic to 0.0.0.0/0)"
+    remediation_guidance: "Review all security groups and NACLs. Remove any broad allow rules. Ensure each inbound rule has a specific CIDR source and port range. Restrict egress to required destinations only."
+
+  - id: "IR-4"
+    title: "Incident Handling"
+    description: "Implement an incident handling capability that includes preparation, detection, analysis, containment, eradication, and recovery."
+    category: "Incident Response (IR)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Detection: CloudTrail, GuardDuty, Config Rules, or equivalent"
+      - "Analysis: CloudWatch Logs, OpenSearch, or centralized log analysis"
+      - "Alerting: SNS, EventBridge, or equivalent notification system"
+      - "Containment: Security groups can be modified to isolate resources"
+      - "Recovery: Backups and multi-AZ enable recovery"
+    remediation_guidance: "Deploy CloudTrail, configure CloudWatch alarms for security events, set up SNS notifications. Ensure log retention supports investigation. Verify backup and multi-AZ configurations enable recovery."
+
+  - id: "CM-6"
+    title: "Configuration Settings - Secure Defaults"
+    description: "Configure system components consistent with security configuration guidelines. Do not rely on implicit defaults — explicitly configure security-relevant settings."
+    category: "Configuration Management (CM)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules: []
+    evidence_requirements:
+      - "Encryption explicitly configured (not relying on account-level defaults)"
+      - "Access restrictions explicitly set (not relying on private-by-default behavior)"
+      - "Logging explicitly enabled (not assuming it's inherited)"
+      - "Resource properties that affect security are present in templates, not omitted"
+    remediation_guidance: "Audit all resources for security-relevant properties that are omitted. Explicitly set encryption, access controls, logging, and network configuration even when the default is currently secure."
+
+  - id: "SA-9"
+    title: "External System Services - Third Party Risk"
+    description: "Require that providers of external system services comply with organizational security requirements. Assess third-party services and models referenced in the architecture for supply chain risk."
+    category: "System and Services Acquisition (SA)"
+    severity: "MEDIUM"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "External model endpoints use HTTPS"
+      - "Third-party container images come from verified registries"
+      - "External API calls use authentication"
+      - "No HTTP (unencrypted) calls to external services"
+    remediation_guidance: "Review all external service references. Ensure HTTPS for all outbound connections. Use verified container registries. Document third-party dependencies and their security posture."
+
+  - id: "AC-4(21)"
+    title: "Information Flow - Geographic Restrictions"
+    description: "Enforce geographic restrictions on information flow. Verify that resources are deployed in approved regions consistent with data residency requirements."
+    category: "Access Control (AC)"
+    severity: "HIGH"
+    artifact_types: ["iac", "architecture"]
+    validation_rules: []
+    evidence_requirements:
+      - "All resources deployed in approved AWS regions"
+      - "No cross-region replication to unapproved regions"
+      - "CloudFront geo-restrictions configured if applicable"
+      - "Data residency requirements documented and enforced"
+    remediation_guidance: "Verify all resources are in approved regions. If cross-region replication is configured, ensure destination regions are approved. Use SCP (Service Control Policies) to prevent resource creation in unapproved regions."

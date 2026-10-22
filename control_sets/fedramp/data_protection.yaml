@@ -1,0 +1,163 @@
+controls:
+  - id: "SC-28(1)"
+    title: "Protection of Information at Rest - Cryptographic Protection"
+    description: "Implement cryptographic mechanisms to prevent unauthorized disclosure and modification of information at rest on all system storage."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC28-CLUSTER"
+        description: "Aurora clusters must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "FR-SC28-EBS"
+        description: "EBS volumes must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Volume"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "FR-SC28-EFS"
+        description: "EFS file systems must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::EFS::FileSystem"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "FR-SC28-REDSHIFT"
+        description: "Redshift clusters must be encrypted"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          Encrypted: true
+      - rule_id: "FR-SC28-LOGGROUP"
+        description: "CloudWatch Log Groups must be encrypted with KMS"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          KmsKeyId: null
+    evidence_requirements:
+      - "All data at rest encrypted with FIPS-validated cryptography"
+      - "KMS CMK used for key management"
+    remediation_guidance: "Enable encryption on all storage resources. Use KMS CMK with FIPS endpoints."
+
+  - id: "CP-6"
+    title: "Alternate Storage Site"
+    description: "Establish an alternate storage site with agreements for storage and retrieval of system backup information."
+    category: "Contingency Planning (CP)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-CP6-RDS-MULTIAZ"
+        description: "RDS must use Multi-AZ"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MultiAZ: true
+      - rule_id: "FR-CP6-CLUSTER-MULTIAZ"
+        description: "Aurora clusters should have multiple availability zones"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBCluster"]
+        required_properties:
+          DeletionProtection: true
+      - rule_id: "FR-CP6-S3-REPLICATION"
+        description: "S3 buckets should have replication for critical data"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          ReplicationConfiguration: null
+    evidence_requirements:
+      - "Multi-AZ or cross-region redundancy"
+      - "Replication configured for critical data"
+    remediation_guidance: "Enable Multi-AZ on RDS. Configure cross-region replication on S3 buckets with critical data."
+
+  - id: "AU-4"
+    title: "Audit Log Storage Capacity"
+    description: "Allocate audit log storage capacity and configure auditing to reduce the likelihood of such capacity being exceeded."
+    category: "Audit and Accountability (AU)"
+    severity: "MEDIUM"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AU4-LOG-RETENTION"
+        description: "CloudWatch Log Groups must have retention configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::Logs::LogGroup"]
+        required_properties:
+          RetentionInDays:
+            "$gte": 90
+    evidence_requirements:
+      - "Log retention configured (prevents unbounded growth)"
+      - "Retention meets organizational requirements"
+    remediation_guidance: "Set RetentionInDays on all log groups. FedRAMP Moderate typically requires 90+ days online, 1 year archived."
+
+  - id: "SI-4"
+    title: "System Monitoring"
+    description: "Monitor the system to detect attacks, indicators of potential attacks, and unauthorized connections."
+    category: "System and Information Integrity (SI)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SI4-RDS-MONITORING"
+        description: "RDS must have enhanced monitoring"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          MonitoringInterval:
+            "$gte": 1
+      - rule_id: "FR-SI4-RDS-LOGS"
+        description: "RDS must export logs to CloudWatch"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          EnableCloudwatchLogsExports: null
+      - rule_id: "FR-SI4-REDSHIFT-LOGS"
+        description: "Redshift must have audit logging"
+        check_type: "resource_property"
+        resource_types: ["AWS::Redshift::Cluster"]
+        required_properties:
+          LoggingProperties: null
+      - rule_id: "FR-SI4-LAMBDA-TRACING"
+        description: "Lambda must have X-Ray tracing for monitoring"
+        check_type: "resource_property"
+        resource_types: ["AWS::Lambda::Function"]
+        required_properties:
+          TracingConfig.Mode:
+            "$equals": "Active"
+    evidence_requirements:
+      - "Enhanced monitoring on databases"
+      - "Log exports configured"
+      - "Distributed tracing active"
+    remediation_guidance: "Enable MonitoringInterval on RDS, EnableCloudwatchLogsExports, LoggingProperties on Redshift, and TracingConfig Mode: Active on Lambda."
+
+  - id: "SC-8(1)"
+    title: "Transmission Confidentiality - Cryptographic Protection"
+    description: "Implement cryptographic mechanisms to prevent unauthorized disclosure of information during transmission."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC8-CDN-HTTPS"
+        description: "CloudFront must enforce HTTPS"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.DefaultCacheBehavior.ViewerProtocolPolicy:
+            "$in": ["redirect-to-https", "https-only"]
+      - rule_id: "FR-SC8-CDN-TLS"
+        description: "CloudFront must use TLS 1.2 minimum"
+        check_type: "resource_property"
+        resource_types: ["AWS::CloudFront::Distribution"]
+        required_properties:
+          DistributionConfig.ViewerCertificate.MinimumProtocolVersion:
+            "$in": ["TLSv1.2_2021", "TLSv1.2_2019", "TLSv1.2_2018"]
+      - rule_id: "FR-SC8-ELB-PROTOCOL"
+        description: "Load balancer listeners must use HTTPS/TLS"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          Protocol:
+            "$in": ["HTTPS", "TLS"]
+    evidence_requirements:
+      - "HTTPS enforced on all external endpoints"
+      - "TLS 1.2 minimum"
+    remediation_guidance: "Set ViewerProtocolPolicy to redirect-to-https. Set MinimumProtocolVersion to TLSv1.2_2021. Use HTTPS/TLS protocol on all listeners."

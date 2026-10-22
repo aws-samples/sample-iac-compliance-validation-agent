@@ -1,0 +1,58 @@
+# Demonstrates cross-resource (graph) validation: the databases are encrypted,
+# but PublicDB is reachable from the internet through its security group — a
+# violation only visible by following the DB -> security group reference.
+#   cva validate samples/network-exposure.yaml -f hipaa
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  PublicDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      StorageEncrypted: true
+      VPCSecurityGroups:
+        - !Ref OpenSG
+
+  PrivateDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: postgres
+      StorageEncrypted: true
+      VPCSecurityGroups:
+        - !Ref TightSG
+
+  OpenSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Database access
+      SecurityGroupIngress:
+        - CidrIp: 10.0.0.0/8
+          FromPort: 5432
+          ToPort: 5432
+          IpProtocol: tcp
+        - CidrIp: 0.0.0.0/0
+          FromPort: 5432
+          ToPort: 5432
+          IpProtocol: tcp
+
+  TightSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Database access
+      SecurityGroupIngress:
+        - CidrIp: 10.0.0.0/8
+          FromPort: 5432
+          ToPort: 5432
+          IpProtocol: tcp
+
+  AuditTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      S3BucketName: !Ref LogBucket
+      IsLogging: true
+
+  LogBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: audit-log-bucket
+      VersioningConfiguration:
+        Status: Enabled

@@ -1,0 +1,91 @@
+controls:
+  - id: "AC-6"
+    title: "Least Privilege"
+    description: "Employ the principle of least privilege, allowing only authorized accesses for users which are necessary to accomplish assigned organizational tasks."
+    category: "Access Control (AC)"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-AC6-NOSTAR-ACTION"
+        description: "IAM roles must not use wildcard actions"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Action"
+            value: "*"
+      - rule_id: "FR-AC6-NOSTAR-RESOURCE"
+        description: "IAM roles must not use wildcard resources"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "Policies[0].PolicyDocument.Statement[0].Resource"
+            value: "*"
+      - rule_id: "FR-AC6-NOADMIN"
+        description: "No AdministratorAccess managed policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::IAM::Role"]
+        anti_patterns:
+          - property: "ManagedPolicyArns[0]"
+            value: "arn:aws:iam::aws:policy/AdministratorAccess"
+    evidence_requirements:
+      - "No wildcard actions or resources"
+      - "No AdministratorAccess policy"
+      - "Specific ARNs used for resource scoping"
+    remediation_guidance: "Replace wildcard permissions with specific actions and resource ARNs. Remove AdministratorAccess."
+
+  - id: "IA-2"
+    title: "Identification and Authentication"
+    description: "Uniquely identify and authenticate organizational users, processes, or devices."
+    category: "Identification and Authentication (IA)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-IA2-RDS"
+        description: "RDS must enable IAM authentication"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          EnableIAMDatabaseAuthentication: true
+      - rule_id: "FR-IA2-EC2-IMDS"
+        description: "EC2 must require IMDSv2 for identity verification"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Instance"]
+        required_properties:
+          MetadataOptions.HttpTokens:
+            "$equals": "required"
+    evidence_requirements:
+      - "IAM authentication for database access"
+      - "IMDSv2 prevents unauthorized credential access"
+    remediation_guidance: "Enable IAM authentication on RDS. Require IMDSv2 on EC2 instances."
+
+  - id: "SC-7"
+    title: "Boundary Protection"
+    description: "Monitor and control communications at the external managed interfaces to the system and at key internal managed interfaces within the system."
+    category: "System and Communications Protection (SC)"
+    severity: "CRITICAL"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC7-SG-SSH"
+        description: "No unrestricted SSH from internet"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::SecurityGroup"]
+        anti_patterns:
+          - property: "SecurityGroupIngress[0].CidrIp"
+            value: "0.0.0.0/0"
+      - rule_id: "FR-SC7-OS-VPC"
+        description: "OpenSearch must be in VPC"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          VPCOptions: null
+      - rule_id: "FR-SC7-EC2-NOIP"
+        description: "EC2 instances should not have public IPs in protected boundaries"
+        check_type: "resource_property"
+        resource_types: ["AWS::EC2::Instance"]
+        required_properties:
+          NetworkInterfaces[0].AssociatePublicIpAddress: false
+    evidence_requirements:
+      - "No unrestricted inbound from internet"
+      - "Services deployed in VPC"
+      - "No unnecessary public IP addresses"
+    remediation_guidance: "Restrict security groups to specific CIDRs. Deploy services in VPCs. Avoid public IP assignment."

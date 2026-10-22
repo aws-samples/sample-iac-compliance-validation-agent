@@ -1,0 +1,8 @@
+{
+  "app": "python3 app.py",
+  "context": {
+    "region": "us-east-1",
+    "enable_semantic": "false",
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true
+  }
+}

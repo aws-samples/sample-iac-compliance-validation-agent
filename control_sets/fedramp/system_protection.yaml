@@ -1,0 +1,108 @@
+controls:
+  - id: "SC-8"
+    title: "Transmission Confidentiality and Integrity"
+    description: "Protect the confidentiality and integrity of transmitted information."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC8-OS-001"
+        description: "OpenSearch must enforce HTTPS"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.EnforceHTTPS: true
+      - rule_id: "FR-SC8-OS-002"
+        description: "OpenSearch must use TLS 1.2+"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          DomainEndpointOptions.TLSSecurityPolicy:
+            "$in": ["Policy-Min-TLS-1-2-2019-07", "Policy-Min-TLS-1-2-PFS-2023-10"]
+      - rule_id: "FR-SC8-OS-003"
+        description: "OpenSearch must have node-to-node encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          NodeToNodeEncryptionOptions.Enabled: true
+      - rule_id: "FR-SC8-ELB-001"
+        description: "Load balancers must use strong TLS policy"
+        check_type: "resource_property"
+        resource_types: ["AWS::ElasticLoadBalancingV2::Listener"]
+        required_properties:
+          SslPolicy:
+            "$in": ["ELBSecurityPolicy-TLS13-1-2-2021-06", "ELBSecurityPolicy-FS-1-2-Res-2020-10", "ELBSecurityPolicy-TLS-1-2-2017-01"]
+    evidence_requirements:
+      - "FIPS 140-2 validated cryptography for transmission"
+      - "TLS 1.2 or higher for all communications"
+    remediation_guidance: "Enforce HTTPS with TLS 1.2 minimum. Use FIPS endpoints where available. Enable node-to-node encryption for internal cluster communications."
+
+  - id: "SC-13"
+    title: "Cryptographic Protection"
+    description: "Implement FIPS-validated or NSA-approved cryptography in accordance with applicable laws, directives, policies, regulations, and standards."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC13-S3-001"
+        description: "S3 must have encryption configured"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          BucketEncryption:
+            ServerSideEncryptionConfiguration: null
+      - rule_id: "FR-SC13-RDS-001"
+        description: "RDS must have storage encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "FR-SC13-DDB-001"
+        description: "DynamoDB must have encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::DynamoDB::Table"]
+        required_properties:
+          SSESpecification:
+            SSEEnabled: true
+      - rule_id: "FR-SC13-OS-001"
+        description: "OpenSearch must have encryption at rest"
+        check_type: "resource_property"
+        resource_types: ["AWS::OpenSearchService::Domain"]
+        required_properties:
+          EncryptionAtRestOptions.Enabled: true
+    evidence_requirements:
+      - "FIPS 140-2 validated cryptographic modules in use"
+      - "Encryption at rest for all federal data"
+      - "Key management using AWS KMS with FIPS endpoints"
+    remediation_guidance: "Enable encryption at rest on all data stores using AWS KMS (which uses FIPS 140-2 validated HSMs). Use FIPS endpoints for API calls in GovCloud or when required."
+
+  - id: "SC-28"
+    title: "Protection of Information at Rest"
+    description: "Protect the confidentiality and integrity of information at rest."
+    category: "System and Communications Protection (SC)"
+    severity: "HIGH"
+    artifact_types: ["iac"]
+    validation_rules:
+      - rule_id: "FR-SC28-S3-001"
+        description: "S3 buckets must have encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::S3::Bucket"]
+        required_properties:
+          BucketEncryption:
+            ServerSideEncryptionConfiguration: null
+      - rule_id: "FR-SC28-RDS-001"
+        description: "RDS must have encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::RDS::DBInstance"]
+        required_properties:
+          StorageEncrypted: true
+      - rule_id: "FR-SC28-SQS-001"
+        description: "SQS must have encryption"
+        check_type: "resource_property"
+        resource_types: ["AWS::SQS::Queue"]
+        required_properties:
+          SqsManagedSseEnabled: true
+    evidence_requirements:
+      - "All data at rest encrypted"
+      - "Encryption keys managed separately from data"
+    remediation_guidance: "Enable encryption on all data stores. Use KMS CMKs for key management. Ensure key policies follow least privilege."
